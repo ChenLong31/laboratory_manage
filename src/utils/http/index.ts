@@ -16,6 +16,10 @@ import { useUserStoreHook } from "@/store/modules/user";
 // 相关配置请参考：www.axios-js.com/zh-cn/docs/#axios-request-config-1
 const defaultConfig: AxiosRequestConfig = {
   // 请求超时时间
+  baseURL:
+    process.env.NODE_ENV === "production"
+      ? "https://your-production-api.com"
+      : "http://localhost:8848",
   timeout: 10000,
   headers: {
     Accept: "application/json, text/plain, */*",

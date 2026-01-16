@@ -64,5 +64,6 @@ export default [
       title: $t("menus.pureEmpty"),
       showLink: false
     }
-  }
+  },
+
 ] satisfies Array<RouteConfigsTable>;

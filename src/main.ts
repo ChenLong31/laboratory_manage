@@ -12,7 +12,7 @@ import { injectResponsiveStorage } from "@/utils/responsive";
 
 import Table from "@pureadmin/table";
 import PureDescriptions from "@pureadmin/descriptions";
-
+import ganttastic from "@infectoone/vue-ganttastic";
 // 引入重置样式
 import "./style/reset.scss";
 // 导入公共样式
@@ -61,6 +61,7 @@ getPlatformConfig(app).then(async config => {
   injectResponsiveStorage(app, config);
   app
     .use(MotionPlugin)
+    .use(ganttastic)
     .use(useI18n)
     .use(useElementPlus)
     .use(Table)

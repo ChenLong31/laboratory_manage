@@ -1,55 +1,3 @@
-<script setup lang="ts">
-import { ref } from "vue";
-import tree from "./tree.vue";
-import { useUser } from "./utils/hook";
-import { PureTableBar } from "@/components/RePureTableBar";
-import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-
-import Upload from "~icons/ri/upload-line";
-import Role from "~icons/ri/admin-line";
-import Password from "~icons/ri/lock-password-line";
-import More from "~icons/ep/more-filled";
-import Delete from "~icons/ep/delete";
-import EditPen from "~icons/ep/edit-pen";
-import Refresh from "~icons/ep/refresh";
-import AddFill from "~icons/ri/add-circle-line";
-
-defineOptions({
-  name: "SystemUser"
-});
-
-const treeRef = ref();
-const formRef = ref();
-const tableRef = ref();
-
-const {
-  form,
-  loading,
-  columns,
-  dataList,
-  treeData,
-  treeLoading,
-  selectedNum,
-  pagination,
-  buttonClass,
-  deviceDetection,
-  onSearch,
-  resetForm,
-  onbatchDel,
-  openDialog,
-  onTreeSelect,
-  handleUpdate,
-  handleDelete,
-  handleUpload,
-  handleReset,
-  handleRole,
-  handleSizeChange,
-  onSelectionCancel,
-  handleCurrentChange,
-  handleSelectionChange
-} = useUser(tableRef, treeRef);
-</script>
-
 <template>
   <div :class="['flex', 'justify-between', deviceDetection() && 'flex-wrap']">
     <tree
@@ -110,11 +58,7 @@ const {
         </el-form-item>
       </el-form>
 
-      <PureTableBar
-        title="用户管理（仅演示，操作后不生效）"
-        :columns="columns"
-        @refresh="onSearch"
-      >
+      <PureTableBar title="" :columns="columns" @refresh="onSearch">
         <template #buttons>
           <el-button
             type="primary"
@@ -253,6 +197,57 @@ const {
     </div>
   </div>
 </template>
+<script setup lang="ts">
+import { ref } from "vue";
+import tree from "./tree.vue";
+import { useUser } from "./utils/hook";
+import { PureTableBar } from "@/components/RePureTableBar";
+import { useRenderIcon } from "@/components/ReIcon/src/hooks";
+
+import Upload from "~icons/ri/upload-line";
+import Role from "~icons/ri/admin-line";
+import Password from "~icons/ri/lock-password-line";
+import More from "~icons/ep/more-filled";
+import Delete from "~icons/ep/delete";
+import EditPen from "~icons/ep/edit-pen";
+import Refresh from "~icons/ep/refresh";
+import AddFill from "~icons/ri/add-circle-line";
+
+defineOptions({
+  name: "SystemUser"
+});
+
+const treeRef = ref();
+const formRef = ref();
+const tableRef = ref();
+
+const {
+  form,
+  loading,
+  columns,
+  dataList,
+  treeData,
+  treeLoading,
+  selectedNum,
+  pagination,
+  buttonClass,
+  deviceDetection,
+  onSearch,
+  resetForm,
+  onbatchDel,
+  openDialog,
+  onTreeSelect,
+  handleUpdate,
+  handleDelete,
+  handleUpload,
+  handleReset,
+  handleRole,
+  handleSizeChange,
+  onSelectionCancel,
+  handleCurrentChange,
+  handleSelectionChange
+} = useUser(tableRef, treeRef);
+</script>
 
 <style lang="scss" scoped>
 :deep(.el-dropdown-menu__item i) {

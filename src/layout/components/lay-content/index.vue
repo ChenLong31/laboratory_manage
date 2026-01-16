@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { useI18n } from "vue-i18n";
 import LayFrame from "../lay-frame/index.vue";
-import LayFooter from "../lay-footer/index.vue";
 import { useTags } from "@/layout/hooks/useTag";
 import { useGlobal, isNumber } from "@pureadmin/utils";
 import BackTopIcon from "@/assets/svg/back_top.svg?component";
@@ -189,8 +188,7 @@ const transitionMain = defineComponent({
       </template>
     </router-view>
 
-    <!-- 页脚 -->
-    <LayFooter v-if="!hideFooter && !fixedHeader" />
+
   </section>
 </template>
 

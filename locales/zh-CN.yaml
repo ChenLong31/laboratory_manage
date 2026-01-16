@@ -132,7 +132,6 @@ menus:
   purePermissionButton: 按钮权限
   purePermissionButtonRouter: 路由返回按钮权限
   purePermissionButtonLogin: 登录接口返回按钮权限
-  pureTabs: 标签页操作
   pureGuide: 引导页
   pureAble: 功能
   pureMenuTree: 菜单树结构
@@ -167,6 +166,8 @@ menus:
   pureLineTree: 树形连接线
   pureList: 列表页面
   pureCardList: 卡片列表页
+  form: 列表页
+  treeForm: 树形列表页
   pureDebounce: 防抖节流
   pureFormDesign: 表单设计器
   pureBarcode: 条形码

@@ -313,32 +313,8 @@ export default defineFakeRoute([
             id: 404,
             menuType: 0,
             title: "menus.pureSystemLog"
-          },
-          // 标签页操作
-          {
-            parentId: 0,
-            id: 500,
-            menuType: 0,
-            title: "menus.pureTabs"
-          },
-          {
-            parentId: 500,
-            id: 501,
-            menuType: 0,
-            title: "menus.pureTabs"
-          },
-          {
-            parentId: 500,
-            id: 502,
-            menuType: 0,
-            title: "query传参模式"
-          },
-          {
-            parentId: 500,
-            id: 503,
-            menuType: 0,
-            title: "params传参模式"
           }
+          // 标签页操作
         ]
       };
     }
@@ -1146,103 +1122,6 @@ export default defineFakeRoute([
             hiddenTag: false,
             fixedTag: false,
             showLink: true,
-            showParent: false
-          },
-          // 标签页操作
-          {
-            parentId: 0,
-            id: 500,
-            menuType: 0,
-            title: "menus.pureTabs",
-            name: "PureTabs",
-            path: "/tabs",
-            component: "",
-            rank: 12,
-            redirect: "",
-            icon: "ri:bookmark-2-line",
-            extraIcon: "",
-            enterTransition: "",
-            leaveTransition: "",
-            activePath: "",
-            auths: "",
-            frameSrc: "",
-            frameLoading: true,
-            keepAlive: false,
-            hiddenTag: false,
-            fixedTag: false,
-            showLink: true,
-            showParent: false
-          },
-          {
-            parentId: 500,
-            id: 501,
-            menuType: 0,
-            title: "menus.pureTabs",
-            name: "Tabs",
-            path: "/tabs/index",
-            component: "",
-            rank: null,
-            redirect: "",
-            icon: "",
-            extraIcon: "",
-            enterTransition: "",
-            leaveTransition: "",
-            activePath: "",
-            auths: "",
-            frameSrc: "",
-            frameLoading: true,
-            keepAlive: false,
-            hiddenTag: false,
-            fixedTag: false,
-            showLink: true,
-            showParent: false
-          },
-          {
-            parentId: 500,
-            id: 502,
-            menuType: 0,
-            title: "query传参模式",
-            name: "TabQueryDetail",
-            path: "/tabs/query-detail",
-            component: "",
-            rank: null,
-            redirect: "",
-            icon: "",
-            extraIcon: "",
-            enterTransition: "",
-            leaveTransition: "",
-            activePath: "/tabs/index",
-            auths: "",
-            frameSrc: "",
-            frameLoading: true,
-            keepAlive: false,
-            hiddenTag: false,
-            fixedTag: false,
-            showLink: false,
-            showParent: false
-          },
-          {
-            parentId: 500,
-            id: 503,
-            menuType: 0,
-            title: "params传参模式",
-            name: "TabParamsDetail",
-            path: "/tabs/params-detail/:id",
-            component: "params-detail",
-            rank: null,
-            redirect: "",
-            icon: "",
-            extraIcon: "",
-            enterTransition: "",
-            leaveTransition: "",
-            activePath: "/tabs/index",
-            auths: "",
-            frameSrc: "",
-            frameLoading: true,
-            keepAlive: false,
-            hiddenTag: false,
-            fixedTag: false,
-            showLink: false,
             showParent: false
           }
         ]

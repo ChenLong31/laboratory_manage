@@ -8,6 +8,31 @@ import { system, monitor, permission, frame, tabs } from "@/router/enums";
  * common：普通角色
  */
 
+const xxxRouetr = {
+  path: "/instrumentManage",
+  meta: {
+    title: "仪器管理"
+  },
+  children: [
+    {
+      path: "/instrumentManage/list",
+      name: "instrumentManage",
+      meta: {
+        title: "仪器管理",
+        showParent: true
+      }
+    },
+    {
+      path: "/instrumentManage/infoForm",
+      name: "infoForm",
+      meta: {
+        title: "仪器信息",
+        showLink: false
+      }
+    }
+  ]
+};
+
 const systemManagementRouter = {
   path: "/system",
   meta: {
@@ -155,171 +180,6 @@ const permissionRouter = {
   ]
 };
 
-const frameRouter = {
-  path: "/iframe",
-  meta: {
-    icon: "ri:links-fill",
-    title: "menus.pureExternalPage",
-    rank: frame
-  },
-  children: [
-    {
-      path: "/iframe/embedded",
-      meta: {
-        title: "menus.pureEmbeddedDoc"
-      },
-      children: [
-        {
-          path: "/iframe/colorhunt",
-          name: "FrameColorHunt",
-          meta: {
-            title: "menus.pureColorHuntDoc",
-            frameSrc: "https://colorhunt.co/",
-            keepAlive: true,
-            roles: ["admin", "common"]
-          }
-        },
-        {
-          path: "/iframe/uigradients",
-          name: "FrameUiGradients",
-          meta: {
-            title: "menus.pureUiGradients",
-            frameSrc: "https://uigradients.com/",
-            keepAlive: true,
-            roles: ["admin", "common"]
-          }
-        },
-        {
-          path: "/iframe/ep",
-          name: "FrameEp",
-          meta: {
-            title: "menus.pureEpDoc",
-            frameSrc: "https://element-plus.org/zh-CN/",
-            keepAlive: true,
-            roles: ["admin", "common"]
-          }
-        },
-        {
-          path: "/iframe/tailwindcss",
-          name: "FrameTailwindcss",
-          meta: {
-            title: "menus.pureTailwindcssDoc",
-            frameSrc: "https://tailwindcss.com/docs/installation",
-            keepAlive: true,
-            roles: ["admin", "common"]
-          }
-        },
-        {
-          path: "/iframe/vue3",
-          name: "FrameVue",
-          meta: {
-            title: "menus.pureVueDoc",
-            frameSrc: "https://cn.vuejs.org/",
-            keepAlive: true,
-            roles: ["admin", "common"]
-          }
-        },
-        {
-          path: "/iframe/vite",
-          name: "FrameVite",
-          meta: {
-            title: "menus.pureViteDoc",
-            frameSrc: "https://cn.vitejs.dev/",
-            keepAlive: true,
-            roles: ["admin", "common"]
-          }
-        },
-        {
-          path: "/iframe/pinia",
-          name: "FramePinia",
-          meta: {
-            title: "menus.purePiniaDoc",
-            frameSrc: "https://pinia.vuejs.org/zh/index.html",
-            keepAlive: true,
-            roles: ["admin", "common"]
-          }
-        },
-        {
-          path: "/iframe/vue-router",
-          name: "FrameRouter",
-          meta: {
-            title: "menus.pureRouterDoc",
-            frameSrc: "https://router.vuejs.org/zh/",
-            keepAlive: true,
-            roles: ["admin", "common"]
-          }
-        }
-      ]
-    },
-    {
-      path: "/iframe/external",
-      meta: {
-        title: "menus.pureExternalDoc"
-      },
-      children: [
-        {
-          path: "/external",
-          name: "https://pure-admin.cn/",
-          meta: {
-            title: "menus.pureExternalLink",
-            roles: ["admin", "common"]
-          }
-        },
-        {
-          path: "/pureUtilsLink",
-          name: "https://pure-admin-utils.netlify.app/",
-          meta: {
-            title: "menus.pureUtilsLink",
-            roles: ["admin", "common"]
-          }
-        }
-      ]
-    }
-  ]
-};
-
-const tabsRouter = {
-  path: "/tabs",
-  meta: {
-    icon: "ri:bookmark-2-line",
-    title: "menus.pureTabs",
-    rank: tabs
-  },
-  children: [
-    {
-      path: "/tabs/index",
-      name: "Tabs",
-      meta: {
-        title: "menus.pureTabs",
-        roles: ["admin", "common"]
-      }
-    },
-    // query 传参模式
-    {
-      path: "/tabs/query-detail",
-      name: "TabQueryDetail",
-      meta: {
-        // 不在menu菜单中显示
-        showLink: false,
-        activePath: "/tabs/index",
-        roles: ["admin", "common"]
-      }
-    },
-    // params 传参模式
-    {
-      path: "/tabs/params-detail/:id",
-      component: "params-detail",
-      name: "TabParamsDetail",
-      meta: {
-        // 不在menu菜单中显示
-        showLink: false,
-        activePath: "/tabs/index",
-        roles: ["admin", "common"]
-      }
-    }
-  ]
-};
-
 export default defineFakeRoute([
   {
     url: "/get-async-routes",
@@ -328,11 +188,10 @@ export default defineFakeRoute([
       return {
         success: true,
         data: [
+          // xxxRouetr,
           systemManagementRouter,
           systemMonitorRouter,
-          permissionRouter,
-          frameRouter,
-          tabsRouter
+          permissionRouter
         ]
       };
     }
