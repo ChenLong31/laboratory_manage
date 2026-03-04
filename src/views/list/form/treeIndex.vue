@@ -53,8 +53,8 @@
             </el-form-item>
             <el-form-item label="状态">
               <el-select
-                style="width: 200px"
                 v-model="filterForm.status"
+                style="width: 200px"
                 placeholder="请选择状态"
                 clearable
               >
@@ -122,8 +122,8 @@
 
     <!-- 树节点操作弹窗 -->
     <el-dialog
-      :title="treeDialog.title"
       v-model="treeDialog.visible"
+      :title="treeDialog.title"
       width="500px"
     >
       <el-form

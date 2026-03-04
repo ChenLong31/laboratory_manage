@@ -1,4 +1,4 @@
-import { http } from "@/utils/http";
+import { http, testUrl } from "@/utils/http";
 
 export type UserResult = {
   success: boolean;
@@ -70,7 +70,46 @@ type ResultTable = {
 
 /** 登录 */
 export const getLogin = (data?: object) => {
-  return http.request<UserResult>("post", "/login", { data });
+  // return http.request("post", `/login`, {
+  return http.request("post", `${testUrl}/api/v1/user/login`, {
+    data
+  });
+};
+/** 用户列表 */
+export const getUserList = (data?: object) => {
+  return http.request("get", `${testUrl}/api/v1/user/get_user_list`, {
+    params: data
+  });
+};
+/** 审核用户注册 */
+export const reviewUser = (data?: object) => {
+  return http.request(
+    "post",
+    `${testUrl}/api/v1/user/review_user_registration`,
+    {
+      data
+    }
+  );
+};
+/** 管理员申请列表 */
+export const getApplicationList = (data?: object) => {
+  return http.request(
+    "get",
+    `${testUrl}/api/v1/admin_application/get_application_list`,
+    {
+      params: data
+    }
+  );
+};
+/** 审核管理员申请 */
+export const reviewApplication = (data?: object) => {
+  return http.request(
+    "post",
+    `${testUrl}/api/v1/admin_application/review_application`,
+    {
+      data
+    }
+  );
 };
 
 /** 刷新`token` */

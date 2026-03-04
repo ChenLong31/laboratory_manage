@@ -17,10 +17,9 @@ import LoginRegist from "./components/LoginRegist.vue";
 import LoginUpdate from "./components/LoginUpdate.vue";
 import LoginQrCode from "./components/LoginQrCode.vue";
 import { useUserStoreHook } from "@/store/modules/user";
-import { initRouter, getTopMenu } from "@/router/utils";
 import { bg, avatar, illustration } from "./utils/static";
 import { ReImageVerify } from "@/components/ReImageVerify";
-import { ref, toRaw, reactive, watch, computed } from "vue";
+import { ref, toRaw, reactive, watch, computed, onMounted } from "vue";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { useTranslationLang } from "@/layout/hooks/useTranslationLang";
 import { useDataThemeChange } from "@/layout/hooks/useDataThemeChange";
@@ -33,7 +32,10 @@ import Check from "~icons/ep/check";
 import User from "~icons/ri/user-3-fill";
 import Info from "~icons/ri/information-line";
 import Keyhole from "~icons/ri/shield-keyhole-line";
-
+import { setToken } from "@/utils/auth";
+import { addPathMatch, getTopMenu, initRouter } from "@/router/utils";
+import { usePermissionStoreHook } from "@/store/modules/permission";
+import { getLogin } from "@/api/user";
 defineOptions({
   name: "Login"
 });
@@ -48,7 +50,9 @@ const ruleFormRef = ref<FormInstance>();
 const currentPage = computed(() => {
   return useUserStoreHook().currentPage;
 });
-
+onMounted(() => {
+  localStorage.removeItem("token");
+});
 const { t } = useI18n();
 const { initStorage } = useLayout();
 initStorage();
@@ -58,8 +62,8 @@ const { title, getDropdownItemStyle, getDropdownItemClass } = useNav();
 const { locale, translationCh, translationEn } = useTranslationLang();
 
 const ruleForm = reactive({
-  username: "admin",
-  password: "admin123",
+  username: "",
+  password: "",
   verifyCode: ""
 });
 
@@ -68,23 +72,28 @@ const onLogin = async (formEl: FormInstance | undefined) => {
   await formEl.validate(valid => {
     if (valid) {
       loading.value = true;
-      useUserStoreHook()
-        .loginByUsername({
-          username: ruleForm.username,
-          password: ruleForm.password
-        })
-        .then(res => {
+      // useUserStoreHook()
+      //   .loginByUsername({
+      //     username: ruleForm.username,
+      //     password: ruleForm.password
+      //   })
+      getLogin({
+        account: ruleForm.username,
+        password: ruleForm.password
+      })
+        .then((res: any) => {
           if (res.success) {
             // 获取后端路由
-            return initRouter().then(() => {
-              disabled.value = true;
-              router
-                .push(getTopMenu(true).path)
-                .then(() => {
-                  message(t("login.pureLoginSuccess"), { type: "success" });
-                })
-                .finally(() => (disabled.value = false));
-            });
+            localStorage.setItem("token", res.content.token);
+            localStorage.setItem("userInfo", JSON.stringify(res.content.user));
+            setToken({
+              username: res.content.user.account,
+              roles: ["admin"],
+              accessToken: res.content.token
+            } as any);
+            usePermissionStoreHook().handleWholeMenus([]);
+            addPathMatch();
+            router.push("/instrumentManage/list");
           } else {
             message(t("login.pureLoginFail"), { type: "error" });
           }
@@ -219,21 +228,6 @@ watch(loginDay, value => {
               </el-form-item>
             </Motion>
 
-            <Motion :delay="200">
-              <el-form-item prop="verifyCode">
-                <el-input
-                  v-model="ruleForm.verifyCode"
-                  clearable
-                  :placeholder="t('login.pureVerifyCode')"
-                  :prefix-icon="useRenderIcon(Keyhole)"
-                >
-                  <template v-slot:append>
-                    <ReImageVerify v-model:code="imgCode" />
-                  </template>
-                </el-input>
-              </el-form-item>
-            </Motion>
-
             <Motion :delay="250">
               <el-form-item>
                 <div class="w-full h-[20px] flex justify-between items-center">
@@ -284,54 +278,7 @@ watch(loginDay, value => {
                 </el-button>
               </el-form-item>
             </Motion>
-
-            <Motion :delay="300">
-              <el-form-item>
-                <div class="w-full h-[20px] flex justify-between items-center">
-                  <el-button
-                    v-for="(item, index) in operates"
-                    :key="index"
-                    class="w-full mt-4!"
-                    size="default"
-                    @click="useUserStoreHook().SET_CURRENTPAGE(index + 1)"
-                  >
-                    {{ t(item.title) }}
-                  </el-button>
-                </div>
-              </el-form-item>
-            </Motion>
           </el-form>
-
-          <Motion v-if="currentPage === 0" :delay="350">
-            <el-form-item>
-              <el-divider>
-                <p class="text-gray-500 text-xs">
-                  {{ t("login.pureThirdLogin") }}
-                </p>
-              </el-divider>
-              <div class="w-full flex justify-evenly">
-                <span
-                  v-for="(item, index) in thirdParty"
-                  :key="index"
-                  :title="t(item.title)"
-                >
-                  <IconifyIconOnline
-                    :icon="`ri:${item.icon}-fill`"
-                    width="20"
-                    class="cursor-pointer text-gray-500 hover:text-blue-400"
-                  />
-                </span>
-              </div>
-            </el-form-item>
-          </Motion>
-          <!-- 手机号登录 -->
-          <LoginPhone v-if="currentPage === 1" />
-          <!-- 二维码登录 -->
-          <LoginQrCode v-if="currentPage === 2" />
-          <!-- 注册 -->
-          <LoginRegist v-if="currentPage === 3" />
-          <!-- 忘记密码 -->
-          <LoginUpdate v-if="currentPage === 4" />
         </div>
       </div>
     </div>

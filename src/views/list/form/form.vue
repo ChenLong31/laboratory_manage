@@ -7,8 +7,8 @@
         </el-form-item>
         <el-form-item label="状态">
           <el-select
-            style="width: 200px"
             v-model="filterForm.status"
+            style="width: 200px"
             placeholder="请选择状态"
             clearable
           >
@@ -119,8 +119,7 @@ const handleReset = () => {
   filterForm.status = "";
   handleSearch();
 };
-const getTableData = () => { 
-};
+const getTableData = () => {};
 const handleAdd = () => {
   currentRow.value = null;
   modalMode.value = "add";

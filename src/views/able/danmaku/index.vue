@@ -184,7 +184,8 @@ function addDanmu() {
         <p class="flex">
           <el-input
             v-model="danmuMsg"
-            type="text"
+            type="primary"
+            link
             placeholder="输入评论后，回车发送弹幕"
             @keyup.enter="addDanmu"
           />

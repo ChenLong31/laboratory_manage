@@ -22,13 +22,17 @@
           <el-col :span="7">
             <el-form-item label="所属楼层">
               <el-select
+                v-model="filterForm.floor_id"
                 style="width: 240px"
-                v-model="filterForm.floor"
                 placeholder="请选择所属楼层"
                 clearable
               >
-                <el-option label="启用" value="1" />
-                <el-option label="禁用" value="0" />
+                <el-option
+                  v-for="item in floorOptions"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value"
+                />
               </el-select>
             </el-form-item>
           </el-col>
@@ -42,21 +46,25 @@
           <el-col :span="7">
             <el-form-item label="所属区域">
               <el-select
+                v-model="filterForm.area_id"
                 style="width: 240px"
-                v-model="filterForm.area"
                 placeholder="请选择所属区域"
                 clearable
               >
-                <el-option label="启用" value="1" />
-                <el-option label="禁用" value="0" />
+                <el-option
+                  v-for="item in areaOptions"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value"
+                />
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="7">
             <el-form-item label="创建时间">
               <el-date-picker
-                style="width: 240px"
                 v-model="filterForm.operatingTime"
+                style="width: 240px"
                 type="daterange"
                 range-separator="至"
                 start-placeholder="开始日期"
@@ -68,13 +76,15 @@
           <el-col :span="7">
             <el-form-item label="状态">
               <el-select
-                style="width: 240px"
                 v-model="filterForm.status"
+                style="width: 240px"
                 placeholder="请选择状态"
                 clearable
               >
-                <el-option label="启用" value="1" />
-                <el-option label="禁用" value="0" />
+                <el-option label="空闲" value="IDLE" />
+                <el-option label="使用中" value="BUSY" />
+                <el-option label="维护中" value="MAINTENANCE" />
+                <el-option label="故障" value="FAULT" />
               </el-select>
             </el-form-item>
           </el-col>
@@ -89,15 +99,15 @@
     <el-card shadow="never" class="mt-4">
       <div class="control">
         <el-button type="primary" @click="handleAdd">新增</el-button>
-        <el-button type="info" @click="handleAdd" color="#F7F8FA"
+        <el-button type="info" color="#F7F8FA" @click="handleAdd"
           >批量导入</el-button
         >
         <el-button
           :icon="Download"
           type="info"
-          @click="handleAdd"
           style="float: right"
           color="#F7F8FA"
+          @click="handleAdd"
           >下载</el-button
         >
       </div>
@@ -120,19 +130,19 @@
             loading="lazy"
             :src="row.image"
             :preview-src-list="tableData.map(v => v.image)"
-            :initial-index="index"
             fit="cover"
           />
         </template>
         <template #action="{ row }">
-          <el-button type="text" size="small" @click="handleEdit(row)"
+          <el-button type="primary" link size="small" @click="handleEdit(row)"
             >编辑</el-button
           >
-          <el-button type="text" size="small" @click="handleRecord(row)"
+          <el-button type="primary" link size="small" @click="handleRecord(row)"
             >记录</el-button
           >
           <el-button
-            type="text"
+            type="primary"
+            link
             style="color: red"
             size="small"
             @click="handleDelete(row)"
@@ -164,163 +174,86 @@ import { ref, reactive, onMounted, nextTick } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { Download } from "@element-plus/icons-vue";
 import { useRouter } from "vue-router";
+import {
+  getDeviceList,
+  getFloorList,
+  getAreaList,
+  deleteDevice
+} from "@/api/labDevice";
 import AppointmentCalendarModal from "./AppointmentCalendarModal.vue";
+import dayjs from "dayjs";
 const router = useRouter();
 
 const filterForm = reactive({
+  device_no: "",
   name: "",
-  status: ""
+  floor_id: "",
+  area_id: "",
+  status: "",
+  operatingTime: []
 });
 const tableHeight = ref("500px");
 
+const floorOptions = ref([]);
+const areaOptions = ref([]);
+
 const tableData = ref([
   {
-    id: 1,
-    number: "SYD001",
-    name: "质构仪",
-    image: "https://pure-admin.github.io/pure-admin-table/imgs/1.jpg",
-    floor: "1层",
-    area: "表征检测区",
-    quantity: 3,
-    createTime: "2025-02-28 10:30",
-    status: "1"
-  },
-  {
-    id: 2,
-    number: "SYD002",
-    name: "离心机",
-    image: "https://pure-admin.github.io/pure-admin-table/imgs/2.jpg",
-    floor: "2层",
-    area: "表征检测区",
-    quantity: 1,
-    createTime: "2025-02-28 10:30",
-    status: "1"
-  },
-  {
-    id: 3,
-    number: "SYD003",
-    name: "多光谱仪",
-    image: "https://pure-admin.github.io/pure-admin-table/imgs/3.jpg",
-    floor: "3层",
-    area: "表征检测区",
-    quantity: 1,
-    createTime: "2025-02-28 10:30",
-    status: "1"
-  },
-  {
-    id: 4,
-    number: "SYD004",
-    name: "质构仪",
-    image: "https://pure-admin.github.io/pure-admin-table/imgs/4.jpg",
-    floor: "1层",
-    area: "表征检测区",
-    quantity: 1,
-    createTime: "2025-02-28 10:30",
-    status: "1"
-  },
-  {
-    id: 5,
-    number: "SYD005",
-    name: "质构仪",
-    image: "https://pure-admin.github.io/pure-admin-table/imgs/5.jpg",
-    floor: "1层",
-    area: "表征检测区",
-    quantity: 1,
-    createTime: "2025-02-28 10:30",
-    status: "1"
-  },
-  {
-    id: 6,
-    number: "SYD006",
-    name: "质构仪",
-    image: "https://pure-admin.github.io/pure-admin-table/imgs/6.jpg",
-    floor: "1层",
-    area: "表征检测区",
-    quantity: 1,
-    createTime: "2025-02-28 10:30",
-    status: "1"
-  },
-  {
-    id: 7,
-    number: "SYD007",
-    name: "质构仪",
-    image: "https://via.placeholder.com/32x32?text=图标7",
-    floor: "1层",
-    area: "表征检测区",
-    quantity: 1,
-    createTime: "2025-02-28 10:30",
-    status: "1"
-  },
-  {
-    id: 8,
-    number: "SYD008",
-    name: "质构仪",
-    image: "https://via.placeholder.com/32x32?text=图标8",
-    floor: "1层",
-    area: "表征检测区",
-    quantity: 1,
-    createTime: "2025-02-28 10:30",
-    status: "1"
-  },
-  {
-    id: 9,
-    number: "SYD009",
-    name: "质构仪",
-    image: "https://via.placeholder.com/32x32?text=图标9",
-    floor: "1层",
-    area: "表征检测区",
-    quantity: 1,
-    createTime: "2025-02-28 10:30",
-    status: "1"
-  },
-  {
-    id: 10,
-    number: "SYD0010",
-    name: "质构仪",
-    image: "https://via.placeholder.com/32x32?text=图标10",
-    floor: "1层",
-    area: "表征检测区",
-    quantity: 1,
-    createTime: "2025-02-28 10:30",
-    status: "1"
+    id: "1",
+    device_no: "AFM001",
+    name: "原子力显微镜",
+    floor_id: "1",
+    floor_name: "1楼",
+    area_id: "1",
+    area_name: "北区",
+    quantity: 2,
+    instance_count: 2,
+    thumbnail_url: "https://example.com/thumb.jpg",
+    description: "高精度原子力显微镜",
+    available_start_time: "08:00",
+    available_end_time: "18:00",
+    price_per_min: "5.00",
+    min_duration: 30,
+    max_advance_days: 7,
+    status: "IDLE",
+    create_time: "2025-01-01T08:00:00Z"
   }
 ]);
 const columns = [
   {
     label: "仪器编号",
-    prop: "number"
+    prop: "device_no"
   },
   {
     label: "仪器名称",
     prop: "name"
   },
   {
-    label: "缩略图",
-    prop: "image",
-    width: 120,
-    slot: "image"
-  },
-  {
     label: "所属楼层",
-    prop: "floor"
+    prop: "floor_name"
   },
   {
     label: "所属区域",
-    prop: "area"
-  },
-  {
-    label: "数量",
-    prop: "quantity"
-  },
-  {
-    label: "创建时间",
-    prop: "createTime"
+    prop: "area_name"
   },
   {
     label: "状态",
     prop: "status",
     formatter: (row, column, cellValue) => {
-      return cellValue === "1" ? "启用" : "禁用";
+      const map = {
+        IDLE: "空闲",
+        BUSY: "使用中",
+        MAINTENANCE: "维护中",
+        FAULT: "故障"
+      };
+      return map[cellValue] || cellValue;
+    }
+  },
+  {
+    label: "创建时间",
+    prop: "create_time",
+    formatter: (row, column, cellValue) => {
+      return dayjs(cellValue).format("YYYY-MM-DD HH:mm:ss");
     }
   },
   {
@@ -331,19 +264,23 @@ const columns = [
 ];
 
 const handleTimeChange = () => {
-  filterForm.startTime = dayjs(filterForm.operatingTime[0]).format(
-    "YYYY-MM-DD HH:mm:ss"
-  );
-  filterForm.endTime = dayjs(filterForm.operatingTime[1]).format(
-    "YYYY-MM-DD HH:mm:ss"
-  );
-  delete filterForm.operatingTime;
+  if (filterForm.operatingTime && filterForm.operatingTime.length === 2) {
+    filterForm.create_time_start = dayjs(filterForm.operatingTime[0]).format(
+      "YYYY-MM-DD HH:mm:ss"
+    );
+    filterForm.create_time_end = dayjs(filterForm.operatingTime[1]).format(
+      "YYYY-MM-DD HH:mm:ss"
+    );
+  } else {
+    filterForm.create_time_start = undefined;
+    filterForm.create_time_end = undefined;
+  }
 };
 
 const pagination = reactive({
   currentPage: 1,
   pageSize: 10,
-  total: 10
+  total: 0
 });
 const modalMode = ref("view"); // view, add, edit
 const currentRow = ref(null);
@@ -355,11 +292,49 @@ const handleSearch = () => {
 
 const handleReset = () => {
   Object.keys(filterForm).forEach(key => {
-    filterForm[key] = ""; // 其他字段置空
+    if (key === "operatingTime") {
+      filterForm[key] = [];
+    } else {
+      filterForm[key] = "";
+    }
   });
   handleSearch();
 };
-const getTableData = () => {};
+const getTableData = () => {
+  const params = {
+    page: pagination.currentPage,
+    page_size: pagination.pageSize,
+    device_no: filterForm.device_no || undefined,
+    name: filterForm.name || undefined,
+    floor_id: filterForm.floor_id || undefined,
+    area_id: filterForm.area_id || undefined,
+    status: filterForm.status || undefined,
+    create_time_start: filterForm.create_time_start || undefined,
+    create_time_end: filterForm.create_time_end || undefined
+  };
+  getDeviceList(params).then(res => {
+    tableData.value = res.content.list;
+    pagination.total = res.content.total;
+  });
+};
+
+const getFloorData = () => {
+  getFloorList({ page: 1, page_size: 200 }).then(res => {
+    floorOptions.value = res.content.list.map(item => ({
+      label: item.name,
+      value: item.id
+    }));
+  });
+};
+
+const getAreaData = () => {
+  getAreaList({ page: 1, page_size: 200 }).then(res => {
+    areaOptions.value = res.content.list.map(item => ({
+      label: item.name,
+      value: item.id
+    }));
+  });
+};
 const handleAdd = () => {
   currentRow.value = null;
   modalMode.value = "add";
@@ -374,7 +349,7 @@ const handleEdit = row => {
   modalMode.value = "edit";
   router.push({
     path: "/instrumentManage/infoForm",
-    query: { mode: modalMode.value }
+    query: { mode: modalMode.value, id: row.id, row: JSON.stringify(row) }
   });
 };
 // 添加新的响应式变量
@@ -398,9 +373,14 @@ const handleDelete = row => {
     type: "warning"
   })
     .then(() => {
-      // 调用删除接口
-      ElMessage.success("删除成功");
-      getTableData();
+      deleteDevice({ device_id: row.id }).then(res => {
+        if (res.success) {
+          ElMessage.success("删除成功");
+          getTableData();
+        } else {
+          ElMessage.error("删除失败");
+        }
+      });
     })
     .catch(() => {
       // 取消删除
@@ -416,6 +396,11 @@ const handleCurrentChange = val => {
   pagination.currentPage = val;
   getTableData();
 };
+onMounted(() => {
+  getTableData();
+  getFloorData();
+  getAreaData();
+});
 </script>
 
 <style scoped>

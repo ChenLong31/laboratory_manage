@@ -12,16 +12,20 @@ import type {
 import { stringify } from "qs";
 import { getToken, formatToken } from "@/utils/auth";
 import { useUserStoreHook } from "@/store/modules/user";
-
+const baseURL =
+  process.env.NODE_ENV === "production"
+    ? "https://your-production-api.com"
+    : "http://localhost:8848";
+export const testUrl = "https://api.little-box.cn";
 // 相关配置请参考：www.axios-js.com/zh-cn/docs/#axios-request-config-1
 const defaultConfig: AxiosRequestConfig = {
   // 请求超时时间
-  baseURL:
-    process.env.NODE_ENV === "production"
-      ? "https://your-production-api.com"
-      : "http://localhost:8848",
+  baseURL: baseURL,
   timeout: 10000,
   headers: {
+    Authorization: localStorage.getItem("token")
+      ? "Bearer" + " " + localStorage.getItem("token")
+      : null,
     Accept: "application/json, text/plain, */*",
     "Content-Type": "application/json",
     "X-Requested-With": "XMLHttpRequest"

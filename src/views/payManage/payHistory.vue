@@ -4,36 +4,32 @@
       <el-form :model="filterForm" label-width="80px" inline>
         <el-row :gutter="10">
           <el-col :span="7">
-            <el-form-item label="账户名称">
-              <el-input
-                v-model="filterForm.number"
-                placeholder="请输入账户名称"
-              />
+            <el-form-item label="课题组">
+              <el-select
+                v-model="filterForm.target_id"
+                style="width: 240px"
+                placeholder="请选择课题组"
+                clearable
+                filterable
+              >
+                <el-option
+                  v-for="item in groupOptions"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value"
+                />
+              </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="7">
             <el-form-item label="支付类型">
               <el-select
+                v-model="filterForm.target_type"
                 style="width: 240px"
-                v-model="filterForm.area"
                 placeholder="请选择支付类型"
                 clearable
               >
-                <el-option label="启用" value="1" />
-                <el-option label="禁用" value="0" />
-              </el-select>
-            </el-form-item>
-          </el-col>
-          <el-col :span="7">
-            <el-form-item label="状态">
-              <el-select
-                style="width: 240px"
-                v-model="filterForm.status"
-                placeholder="请选择状态"
-                clearable
-              >
-                <el-option label="启用" value="1" />
-                <el-option label="禁用" value="0" />
+                <el-option label="课题组" value="PROJECT_GROUP" />
               </el-select>
             </el-form-item>
           </el-col>
@@ -42,23 +38,6 @@
               <el-button type="primary" @click="handleSearch">查询</el-button>
             </el-form-item>
           </el-col>
-        </el-row>
-        <el-row :gutter="10">
-          <el-col :span="7">
-            <el-form-item label="支付时间">
-              <el-date-picker
-                style="width: 240px"
-                v-model="filterForm.operatingTime"
-                type="datetimerange"
-                range-separator="至"
-                start-placeholder="开始日期"
-                end-placeholder="结束日期"
-                @change="handleTimeChange"
-              />
-            </el-form-item>
-          </el-col>
-          <el-col :span="7"></el-col>
-          <el-col :span="7"> </el-col>
           <el-col :span="3">
             <el-form-item>
               <el-button @click="handleReset">重置</el-button>
@@ -84,14 +63,16 @@
         <template #action="{ row }">
           <el-button
             v-if="row.status === '已完成' || row.status == '已取消'"
-            type="text"
+            type="primary"
+            link
             size="small"
             @click="handleView(row)"
             >查看</el-button
           >
           <el-button
             v-else
-            type="text"
+            type="primary"
+            link
             style="color: red"
             size="small"
             @click="handleDelete(row)"
@@ -116,123 +97,52 @@
 
 <script setup>
 import { ref, reactive, onMounted } from "vue";
-import { dayjs, ElMessage, ElMessageBox } from "element-plus";
+import { ElMessage, ElMessageBox } from "element-plus";
 import { useRouter } from "vue-router";
-
+import dayjs from "dayjs";
+import { get_recharge_records, get_group_list } from "@/api/labDevice";
 const router = useRouter();
 
 const filterForm = reactive({
-  number: "",
-  area: "",
-  status: "",
-  operatingTime: []
+  target_type: "",
+  target_id: ""
 });
+const groupOptions = ref([]);
 
 // 修改后的表头列定义 - 根据截图调整
 const columns = [
+  { label: "记录ID", prop: "id" },
+  { label: "目标类型", prop: "target_type" },
+  { label: "目标名称", prop: "target_name" },
+  { label: "充值金额", prop: "amount" },
+  { label: "充值前余额", prop: "balance_before" },
+  { label: "充值后余额", prop: "balance_after" },
+  { label: "操作人", prop: "operator_name" },
   {
-    label: "支付单号",
-    prop: "orderNumber"
-  },
-  {
-    label: "支付人",
-    prop: "payer"
-  },
-  {
-    label: "手机号",
-    prop: "phoneNumber"
-  },
-  {
-    label: "支付类型",
-    prop: "paymentType"
+    label: "备注",
+    prop: "remark"
   },
   {
     label: "支付时间",
-    prop: "paymentTime"
+    prop: "create_time",
+    formatter: (row, column, cellValue) =>
+      dayjs(cellValue).format("YYYY-MM-DD HH:mm:ss")
   }
 ];
 
-// 修改后的表格数据 - 根据截图调整
 const tableData = ref([
   {
-    id: 1,
-    orderNumber: "7472629120361920173",
-    payer: "陈晓宇",
-    phoneNumber: "13888888888",
-    paymentType: "课题组",
-    paymentTime: "2025-02-28 10:30"
-  },
-  {
-    id: 2,
-    orderNumber: "7472629120361920173",
-    payer: "陈晓宇",
-    phoneNumber: "13888888888",
-    paymentType: "课题组",
-    paymentTime: "2025-02-28 10:30"
-  },
-  {
-    id: 3,
-    orderNumber: "7472629120361920173",
-    payer: "陈晓宇",
-    phoneNumber: "13888888888",
-    paymentType: "个人账户",
-    paymentTime: "2025-02-28 10:30"
-  },
-  {
-    id: 4,
-    orderNumber: "7472629120361920173",
-    payer: "陈晓宇",
-    phoneNumber: "13888888888",
-    paymentType: "个人账户",
-    paymentTime: "2025-02-28 10:30"
-  },
-  {
-    id: 5,
-    orderNumber: "7472629120361920173",
-    payer: "陈晓宇",
-    phoneNumber: "13888888888",
-    paymentType: "个人用户",
-    paymentTime: "2025-02-28 10:30"
-  },
-  {
-    id: 6,
-    orderNumber: "7472629120361920173",
-    payer: "陈晓宇",
-    phoneNumber: "13888888888",
-    paymentType: "个人账户",
-    paymentTime: "2025-02-28 10:30"
-  },
-  {
-    id: 7,
-    orderNumber: "7472629120361920173",
-    payer: "陈晓宇",
-    phoneNumber: "13888888888",
-    paymentType: "个人账户",
-    paymentTime: "2025-02-28 10:30"
-  },
-  {
-    id: 8,
-    orderNumber: "7472629120361920173",
-    payer: "陈晓宇",
-    phoneNumber: "13888888888",
-    paymentType: "个人账户",
-    paymentTime: "2025-02-28 10:30"
-  },
-  {
-    id: 9,
-    orderNumber: "7472629120361920173",
-    payer: "陈晓宇",
-    phoneNumber: "13888888888",
-    paymentType: "个人账户",
-    paymentTime: "2025-02-28 10:30"
-  },
-  {
-    id: 10,
-    orderNumber: "7472629120361920173",
-    payer: "陈晓宇",
-    phoneNumber: "13888888888",
-    paymentType: "个人账户",
-    paymentTime: "2025-02-28 10:30"
+    id: "1",
+    target_type: "PROJECT_GROUP",
+    target_id: "3",
+    target_name: "生物工程学院",
+    amount: "500.00",
+    balance_before: "1000.00",
+    balance_after: "1500.00",
+    operator_id: "1",
+    operator_name: "系统管理员",
+    remark: "2025年度经费",
+    create_time: "2025-11-15T10:30:00Z"
   }
 ]);
 
@@ -245,15 +155,7 @@ const pagination = reactive({
 const modalMode = ref("view"); // view, add, edit
 const currentRow = ref(null);
 
-const handleTimeChange = () => {
-  filterForm.startTime = dayjs(filterForm.operatingTime[0]).format(
-    "YYYY-MM-DD HH:mm:ss"
-  );
-  filterForm.endTime = dayjs(filterForm.operatingTime[1]).format(
-    "YYYY-MM-DD HH:mm:ss"
-  );
-  delete filterForm.operatingTime;
-};
+const handleTimeChange = () => {};
 
 const handleSearch = () => {
   pagination.currentPage = 1;
@@ -268,42 +170,23 @@ const handleReset = () => {
 };
 
 const getTableData = () => {
-  console.log("filterForm", filterForm);
-};
-
-const handleAdd = () => {
-  currentRow.value = null;
-  modalMode.value = "add";
-  router.push({
-    path: "/instrumentManage/infoForm",
-    query: { mode: modalMode.value }
+  const params = {
+    page: pagination.currentPage,
+    page_size: pagination.pageSize,
+    target_type: filterForm.target_type || undefined,
+    target_id: filterForm.target_id || undefined
+  };
+  get_recharge_records(params).then(res => {
+    tableData.value = res?.content?.list ?? [];
+    pagination.total = res?.content?.total ?? 0;
   });
 };
 
-const handleView = row => {
-  currentRow.value = { ...row };
-  modalMode.value = "view";
-  router.push({
-    path: "/instrumentManage/infoForm",
-    query: { mode: modalMode.value }
-  });
-};
+const handleAdd = () => {};
 
-const handleDelete = row => {
-  ElMessageBox.confirm("确认删除该条数据?", "提示", {
-    confirmButtonText: "确定",
-    cancelButtonText: "取消",
-    type: "warning"
-  })
-    .then(() => {
-      // 调用删除接口
-      ElMessage.success("删除成功");
-      getTableData();
-    })
-    .catch(() => {
-      // 取消删除
-    });
-};
+const handleView = row => {};
+
+const handleDelete = row => {};
 
 const handleSizeChange = val => {
   pagination.pageSize = val;
@@ -314,6 +197,18 @@ const handleCurrentChange = val => {
   pagination.currentPage = val;
   getTableData();
 };
+const getGroupOptions = () => {
+  get_group_list({ page: 1, page_size: 200 }).then(res => {
+    groupOptions.value = (res?.content?.list ?? []).map(i => ({
+      label: i.name,
+      value: i.id
+    }));
+  });
+};
+onMounted(() => {
+  getTableData();
+  getGroupOptions();
+});
 </script>
 
 <style scoped>

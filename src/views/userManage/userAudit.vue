@@ -6,34 +6,29 @@
           <el-col :span="7">
             <el-form-item label="用户账号">
               <el-input
-                v-model="filterForm.number"
+                v-model="filterForm.account"
                 placeholder="请输入用户账号"
               />
             </el-form-item>
           </el-col>
           <el-col :span="7">
             <el-form-item label="用户名称">
-              <el-select
-                style="width: 240px"
-                v-model="filterForm.area"
-                placeholder="请选择用户名称"
-                clearable
-              >
-                <el-option label="启用" value="1" />
-                <el-option label="禁用" value="0" />
-              </el-select>
+              <el-input
+                v-model="filterForm.real_name"
+                placeholder="请输入用户名称"
+              />
             </el-form-item>
           </el-col>
           <el-col :span="7">
             <el-form-item label="用户类型">
               <el-select
+                v-model="filterForm.user_type"
                 style="width: 240px"
-                v-model="filterForm.status"
                 placeholder="请选择用户类型"
                 clearable
               >
-                <el-option label="启用" value="1" />
-                <el-option label="禁用" value="0" />
+                <el-option label="内部用户" value="INTERNAL" />
+                <el-option label="外部用户" value="EXTERNAL" />
               </el-select>
             </el-form-item>
           </el-col>
@@ -46,17 +41,14 @@
         <el-row :gutter="10">
           <el-col :span="7">
             <el-form-item label="手机号">
-              <el-input
-                v-model="filterForm.phone"
-                placeholder="请输入用户账号"
-              />
+              <el-input v-model="filterForm.phone" placeholder="请输入手机号" />
             </el-form-item>
           </el-col>
           <el-col :span="7">
             <el-form-item label="注册时间">
               <el-date-picker
-                style="width: 240px"
                 v-model="filterForm.operatingTime"
+                style="width: 240px"
                 type="datetimerange"
                 range-separator="至"
                 start-placeholder="开始日期"
@@ -67,18 +59,18 @@
             </el-form-item>
           </el-col>
           <el-col :span="7">
-            <el-form-item label="状态">
+            <!-- <el-form-item label="身份状态">
               <el-select
+                v-model="filterForm.identity_status"
                 style="width: 240px"
-                v-model="filterForm.status"
-                placeholder="请选择状态"
+                placeholder="请选择身份状态"
                 clearable
               >
-                <el-option label="已审核" value="1" />
-                <el-option label="待审核" value="0" />
-                <el-option label="驳回" value="2" />
+                <el-option label="待审核" value="PENDING" />
+                <el-option label="已通过" value="APPROVED" />
+                <el-option label="已拒绝" value="REJECTED" />
               </el-select>
-            </el-form-item>
+            </el-form-item> -->
           </el-col>
           <el-col :span="3">
             <el-form-item>
@@ -88,20 +80,18 @@
         </el-row>
       </el-form>
     </el-card>
+
     <el-card shadow="never" class="mt-4">
-      <div class="control">
-        <!-- <el-button type="primary" @click="handleAdd">新增</el-button> -->
-        <!-- <el-button type="info" @click="handleAdd" color="#F7F8FA"
-          >批量导入</el-button
-        > -->
+      <!-- <div class="control">
         <el-button
           :icon="Download"
           type="info"
-          @click="handleAdd"
           color="#F7F8FA"
+          @click="handleAdd"
           >下载</el-button
         >
-      </div>
+      </div> -->
+
       <pure-table
         :data="tableData"
         :columns="columns"
@@ -116,31 +106,42 @@
         }"
       >
         <template #status="{ row }">
-          <el-tag v-if="row.auditStatus === '1'" type="success" size="small">
+          <el-tag
+            v-if="row.identity_status === 'APPROVED'"
+            type="success"
+            size="small"
+          >
             已审核
           </el-tag>
           <el-tag
-            v-else-if="row.auditStatus === '0'"
+            v-else-if="row.identity_status === 'PENDING'"
             type="warning"
             size="small"
           >
             待审核
           </el-tag>
           <el-tag
-            v-else-if="row.auditStatus === '2'"
+            v-else-if="row.identity_status === 'REJECTED'"
             type="danger"
             size="small"
           >
             驳回
           </el-tag>
           <el-tag v-else type="info" size="small">
-            {{ row.auditStatus }}
+            {{ row.identity_status }}
           </el-tag>
         </template>
         <template #action="{ row }">
-          <el-button type="text" @click="handlePop(row)">审核</el-button>
+          <el-button
+            type="primary"
+            v-if="row.identity_status === 'PENDING'"
+            link
+            @click="handlePop(row)"
+            >审核</el-button
+          >
         </template>
       </pure-table>
+
       <div class="pagination">
         <el-pagination
           v-model:current-page="pagination.currentPage"
@@ -153,9 +154,10 @@
         />
       </div>
     </el-card>
+
     <auditDia
-      ref="quotaConfigDialogRef"
       :id="currentRow?.id"
+      ref="quotaConfigDialogRef"
       @confirm="handleQuotaConfirm"
       @close="quotaDialogVisible = false"
     />
@@ -168,115 +170,67 @@ import { ref, reactive, onMounted, nextTick } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useRouter } from "vue-router";
 import auditDia from "./components/auditDia.vue";
+import { getUserList, reviewUser } from "@/api/user";
+import dayjs from "dayjs";
 const router = useRouter();
 
+// 筛选表单字段映射为接口参数
 const filterForm = reactive({
-  number: "",
-  area: "",
-  status: "",
-  operatingTime: []
+  account: "",
+  real_name: "",
+  user_type: "",
+  identity_status: "",
+  operatingTime: [],
+  startTime: "", // 注册时间开始
+  endTime: "" // 注册时间结束
 });
 
+// 表格列定义
 const columns = [
+  { label: "账号", prop: "account" },
+  { label: "用户名称", prop: "real_name" },
+  { label: "手机号", prop: "mobile" },
+  { label: "用户类型", prop: "user_type" },
+  { label: "学号", prop: "student_no" },
   {
-    label: "账号",
-    prop: "accountName"
-  },
-  {
-    label: "用户名称",
-    prop: "owner"
-  },
-  {
-    label: "老师姓名",
-    prop: "teacherName"
-  },
-  {
-    label: "手机号",
-    prop: "phoneNumber"
-  },
-  {
-    label: "用户类型",
-    prop: "userType"
-  },
-  {
-    label: "状态",
-    prop: "auditStatus",
+    label: "身份状态",
+    prop: "identity_status",
     slot: "status"
   },
   {
     label: "注册时间",
-    prop: "registerTime"
+    prop: "create_time",
+    formatter: (row, column, cellValue) => {
+      return dayjs(cellValue).format("YYYY-MM-DD HH:mm:ss");
+    }
   },
-
-  {
-    label: "操作",
-    width: 160,
-    slot: "action"
-  }
+  { label: "操作", width: 160, slot: "action" }
 ];
 
+// 数据列表和分页
 const tableData = ref([
   {
-    id: 1,
-    accountName: "admin",
-    owner: "陈晓宇",
-    teacherName: "李老师",
-    phoneNumber: "13888888888",
-    userType: "超级管理员",
-    auditStatus: "1", // 已审核
-    registerTime: "2025-02-28 10:30"
-  },
-  {
-    id: 2,
-    accountName: "user1",
-    owner: "陈晓宇",
-    teacherName: "王老师",
-    phoneNumber: "13888888888",
-    userType: "仪器管理员",
-    auditStatus: "0", // 待审核
-    registerTime: "2025-02-28 10:30"
-  },
-  {
-    id: 3,
-    accountName: "user1",
-    owner: "陈晓宇",
-    teacherName: "张老师",
-    phoneNumber: "13888888888",
-    userType: "教师",
-    auditStatus: "2", // 驳回
-    registerTime: "2025-02-28 10:30"
-  },
-  {
-    id: 4,
-    accountName: "user1",
-    owner: "陈晓宇",
-    teacherName: "刘老师",
-    phoneNumber: "13888888888",
-    userType: "学生",
-    auditStatus: "1", // 已审核
-    registerTime: "2025-02-28 10:30"
-  },
-  {
-    id: 5,
-    accountName: "user1",
-    owner: "陈晓宇",
-    teacherName: "赵老师",
-    phoneNumber: "13888888888",
-    userType: "校外",
-    auditStatus: "0", // 待审核
-    registerTime: "2025-02-28 10:30"
+    id: "10",
+    account: "zhangsan",
+    real_name: "张三",
+    mobile: "13800138000",
+    user_type: "INTERNAL",
+    student_no: "2021018221",
+    identity_status: "PENDING",
+    create_time: "2025-11-01T10:00:00Z"
   }
 ]);
-
 const pagination = reactive({
   currentPage: 1,
   pageSize: 10,
-  total: 10
+  total: 0
 });
 
 const modalMode = ref("view"); // view, add, edit
 const currentRow = ref(null);
+const quotaConfigDialogRef = ref(null);
 
+// 时间范围变化处理
 const handleTimeChange = () => {
   if (filterForm.operatingTime && filterForm.operatingTime.length === 2) {
     filterForm.startTime = filterForm.operatingTime[0];
@@ -284,76 +238,91 @@ const handleTimeChange = () => {
   }
 };
 
+// 查询
 const handleSearch = () => {
   pagination.currentPage = 1;
   getTableData();
 };
 
+// 重置
 const handleReset = () => {
   Object.keys(filterForm).forEach(key => {
-    filterForm[key] = ""; // 其他字段置空
+    if (key !== "operatingTime") {
+      filterForm[key] = "";
+    } else {
+      filterForm[key] = [];
+    }
   });
   handleSearch();
 };
 
+// 获取数据
 const getTableData = () => {
-  console.log("filterForm", filterForm);
-};
+  const params = {
+    page: pagination.currentPage,
+    page_size: pagination.pageSize,
+    account: filterForm.account || undefined,
+    real_name: filterForm.real_name || undefined,
+    user_type: filterForm.user_type || undefined,
+    identity_status: "PENDING" || undefined,
+    start_time: filterForm.startTime || undefined,
+    end_time: filterForm.endTime || undefined
+  };
 
-const handleAdd = flag => {
-  currentRow.value = null;
-  modalMode.value = "flag";
-  router.push({
-    path: "/userManage/userInfoForm",
-    query: { mode: modalMode.value }
+  getUserList(params).then(res => {
+    console.log("res", res);
+    if (res.success) {
+      tableData.value = res.content.list;
+      pagination.total = res.content.total;
+    } else {
+      ElMessage.error("获取数据失败");
+    }
   });
 };
 
-const handleView = (row, flag) => {
-  currentRow.value = { ...row };
-  modalMode.value = flag;
-  router.push({
-    path: "/userManage/userInfoForm",
-    query: { mode: modalMode.value }
-  });
+// 下载
+const handleAdd = () => {
+  // 可添加导出逻辑
 };
-const quotaConfigDialogRef = ref(null);
+
+// 审核弹窗
 const handlePop = row => {
   currentRow.value = row;
   nextTick(() => {
     if (quotaConfigDialogRef.value) {
-      quotaConfigDialogRef.value.open();
+      quotaConfigDialogRef.value.open(row);
     }
   });
 };
+
+// 审核确认
 const handleQuotaConfirm = data => {
-  getTableData();
-};
-const handleDelete = row => {
-  ElMessageBox.confirm("确认删除该条数据?", "提示", {
-    confirmButtonText: "确定",
-    cancelButtonText: "取消",
-    type: "warning"
-  })
-    .then(() => {
-      // 调用删除接口
-      ElMessage.success("删除成功");
-      getTableData();
-    })
-    .catch(() => {
-      // 取消删除
-    });
+  const { action, user_id } = data;
+  reviewUser({ user_id, action }).then(res => {
+    if (res.success) {
+      ElMessage.success("审核成功");
+      getTableData(); // 刷新列表
+    } else {
+      ElMessage.error("审核失败");
+    }
+  });
 };
 
+// 分页大小变更
 const handleSizeChange = val => {
   pagination.pageSize = val;
   getTableData();
 };
 
+// 当前页变更
 const handleCurrentChange = val => {
   pagination.currentPage = val;
   getTableData();
 };
+
+onMounted(() => {
+  getTableData();
+});
 </script>
 
 <style scoped>
@@ -363,7 +332,6 @@ const handleCurrentChange = val => {
 .mt-4 {
   margin-top: 1rem;
 }
-
 .pagination {
   margin-top: 1rem;
   display: flex;

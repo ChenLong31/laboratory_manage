@@ -187,8 +187,6 @@ const transitionMain = defineComponent({
         </LayFrame>
       </template>
     </router-view>
-
-
   </section>
 </template>
 

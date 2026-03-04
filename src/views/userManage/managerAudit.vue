@@ -6,7 +6,7 @@
           <el-col :span="7">
             <el-form-item label="账户名称">
               <el-input
-                v-model="filterForm.number"
+                v-model="filterForm.account"
                 placeholder="请输入账户名称"
               />
             </el-form-item>
@@ -14,28 +14,27 @@
           <el-col :span="7">
             <el-form-item label="申请类型">
               <el-select
+                v-model="filterForm.application_type"
                 style="width: 240px"
-                v-model="filterForm.area"
                 placeholder="全部"
                 clearable
               >
-                <el-option label="仪器管理员" value="仪器管理员" />
-                <el-option label="课题组管理员" value="课题组管理员" />
-                <el-option label="其他" value="其他" />
+                <el-option label="仪器管理员" value="DEVICE_ADMIN" />
+                <el-option label="课题组管理员" value="GROUP_ADMIN" />
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="7">
             <el-form-item label="状态">
               <el-select
-                style="width: 240px"
                 v-model="filterForm.status"
+                style="width: 240px"
                 placeholder="全部"
                 clearable
               >
-                <el-option label="待审批" value="0" />
-                <el-option label="已通过" value="1" />
-                <el-option label="已驳回" value="2" />
+                <el-option label="待审批" value="PENDING" />
+                <el-option label="已通过" value="APPROVED" />
+                <el-option label="已驳回" value="REJECTED" />
               </el-select>
             </el-form-item>
           </el-col>
@@ -49,8 +48,8 @@
           <el-col :span="7">
             <el-form-item label="申请时间">
               <el-date-picker
-                style="width: 240px"
                 v-model="filterForm.operatingTime"
+                style="width: 240px"
                 type="datetimerange"
                 range-separator="至"
                 start-placeholder="开始日期"
@@ -60,8 +59,8 @@
               />
             </el-form-item>
           </el-col>
-          <el-col :span="7"> </el-col>
-          <el-col :span="7"> </el-col>
+          <el-col :span="7" />
+          <el-col :span="7" />
           <el-col :span="3">
             <el-form-item>
               <el-button @click="handleReset">重置</el-button>
@@ -85,29 +84,35 @@
         }"
       >
         <template #status="{ row }">
-          <el-tag v-if="row.auditStatus === '1'" type="success" size="small">
+          <el-tag v-if="row.status === 'APPROVED'" type="success" size="small">
             已通过
           </el-tag>
           <el-tag
-            v-else-if="row.auditStatus === '0'"
+            v-else-if="row.status === 'PENDING'"
             type="warning"
             size="small"
           >
             待审批
           </el-tag>
           <el-tag
-            v-else-if="row.auditStatus === '2'"
+            v-else-if="row.status === 'REJECTED'"
             type="danger"
             size="small"
           >
             已驳回
           </el-tag>
           <el-tag v-else type="info" size="small">
-            {{ row.auditStatus }}
+            {{ row.status }}
           </el-tag>
         </template>
         <template #action="{ row }">
-          <el-button type="text" @click="handlePop(row)">审批</el-button>
+          <el-button
+            v-if="row.status === 'PENDING'"
+            type="primary"
+            link
+            @click="handlePop(row)"
+            >审批</el-button
+          >
         </template>
       </pure-table>
       <div class="pagination">
@@ -124,8 +129,8 @@
     </el-card>
 
     <managerAuditDia
-      ref="quotaConfigDialogRef"
       :id="currentRow?.id"
+      ref="quotaConfigDialogRef"
       @confirm="handleQuotaConfirm"
       @close="quotaDialogVisible = false"
     />
@@ -138,133 +143,55 @@ import { ref, reactive, onMounted, nextTick } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useRouter } from "vue-router";
 import managerAuditDia from "./components/managerAuditDia.vue";
-
+import { getApplicationList } from "@/api/user";
+import dayjs from "dayjs";
 const router = useRouter();
 
 const filterForm = reactive({
-  number: "",
-  area: "",
+  account: "",
+  real_name: "",
+  application_type: "",
   status: "",
   operatingTime: []
 });
 
 const columns = [
-  {
-    label: "账号",
-    prop: "accountName"
-  },
-  {
-    label: "申请人",
-    prop: "owner"
-  },
-  {
-    label: "手机号",
-    prop: "phoneNumber"
-  },
+  { label: "账号", prop: "user_account" },
+  { label: "申请人", prop: "user_name" },
   {
     label: "管理员类型",
-    prop: "userType"
+    prop: "application_type",
+    formatter: row =>
+      row.application_type === "DEVICE_ADMIN"
+        ? "仪器管理员"
+        : row.application_type === "GROUP_ADMIN"
+          ? "课题组管理员"
+          : row.application_type
   },
-  {
-    label: "仪器/课题组名称",
-    prop: "instrumentGroup"
-  },
+  { label: "仪器/课题组名称", prop: "target_name" },
   {
     label: "申请时间",
-    prop: "registerTime"
+    prop: "submit_time",
+    formatter: (row, column, cellValue) => {
+      return dayjs(cellValue).format("YYYY-MM-DD HH:mm:ss");
+    }
   },
-  {
-    label: "状态",
-    prop: "auditStatus",
-    slot: "status"
-  },
-  {
-    label: "操作",
-    width: 160,
-    slot: "action"
-  }
+  { label: "状态", prop: "status", slot: "status" },
+  { label: "操作", width: 160, slot: "action" }
 ];
 
 const tableData = ref([
   {
-    id: 1,
-    accountName: "chenxiaoyu123",
-    owner: "陈晓宇",
-    phoneNumber: "13888888888",
-    userType: "仪器管理员",
-    instrumentGroup: "质构仪",
-    auditStatus: "1", // 已通过
-    registerTime: "2025-02-28 10:30"
-  },
-  {
-    id: 2,
-    accountName: "chenxiaoyu123",
-    owner: "陈晓宇",
-    phoneNumber: "13888888888",
-    userType: "仪器管理员",
-    instrumentGroup: "质构仪",
-    auditStatus: "1", // 已通过
-    registerTime: "2025-02-28 10:30"
-  },
-  {
-    id: 3,
-    accountName: "chenxiaoyu123",
-    owner: "陈晓宇",
-    phoneNumber: "13888888888",
-    userType: "课题组管理员",
-    instrumentGroup: "化学系小组",
-    auditStatus: "2", // 已驳回
-    registerTime: "2025-02-28 10:30"
-  },
-  {
-    id: 4,
-    accountName: "chenxiaoyu123",
-    owner: "陈晓宇",
-    phoneNumber: "13888888888",
-    userType: "课题组管理员",
-    instrumentGroup: "化学系小组",
-    auditStatus: "0", // 待审批
-    registerTime: "2025-02-28 10:30"
-  },
-  {
-    id: 5,
-    accountName: "chenxiaoyu123",
-    owner: "陈晓宇",
-    phoneNumber: "13888888888",
-    userType: "课题组管理员",
-    instrumentGroup: "化学系小组",
-    auditStatus: "0", // 待审批
-    registerTime: "2025-02-28 10:30"
-  },
-  {
-    id: 6,
-    accountName: "chenxiaoyu123",
-    owner: "陈晓宇",
-    phoneNumber: "13888888888",
-    userType: "课题组管理员",
-    instrumentGroup: "化学系小组",
-    auditStatus: "0", // 待审批
-    registerTime: "2025-02-28 10:30"
-  },
-  {
-    id: 7,
-    accountName: "chenxiaoyu123",
-    owner: "陈晓宇",
-    phoneNumber: "13888888888",
-    userType: "课题组管理员",
-    instrumentGroup: "化学系小组",
-    auditStatus: "0", // 待审批
-    registerTime: "2025-02-28 10:30"
-  },
-  {
-    id: 8,
-    accountName: "chenxiaoyu123",
-    owner: "陈晓宇",
-    phoneNumber: "13888888888",
-    userType: "课题组管理员",
-    instrumentGroup: "化学系小组",
-    auditStatus: "0", // 待审批
-    registerTime: "2025-02-28 10:30"
+    id: "5",
+    user_id: "10",
+    user_account: "zhangsan",
+    user_name: "张三",
+    application_type: "DEVICE_ADMIN",
+    target_name: "原子力显微镜",
+    target_id: "3",
+    status: "PENDING",
+    submit_time: "2025-11-10T14:00:00Z",
+    approval_time: null
   }
 ]);
 
@@ -297,7 +224,18 @@ const handleReset = () => {
 };
 
 const getTableData = () => {
-  console.log("filterForm", filterForm);
+  const params = {
+    page: pagination.currentPage,
+    page_size: pagination.pageSize,
+    account: filterForm.account,
+    real_name: filterForm.real_name,
+    application_type: filterForm.application_type,
+    status: filterForm.status
+  };
+  getApplicationList(params).then(res => {
+    tableData.value = res?.content?.list ?? [];
+    pagination.total = res?.content?.total ?? 0;
+  });
 };
 
 const handleAdd = flag => {
@@ -323,7 +261,7 @@ const handlePop = row => {
   currentRow.value = row;
   nextTick(() => {
     if (quotaConfigDialogRef.value) {
-      quotaConfigDialogRef.value.open();
+      quotaConfigDialogRef.value.open(row);
     }
   });
 };
@@ -361,6 +299,9 @@ const handleCurrentChange = val => {
 const handleExport = () => {
   ElMessage.success("导出成功");
 };
+onMounted(() => {
+  getTableData();
+});
 </script>
 
 <style scoped>

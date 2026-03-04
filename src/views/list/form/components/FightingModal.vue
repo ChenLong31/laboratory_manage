@@ -1,7 +1,7 @@
 <template>
   <el-dialog
-    :title="getTitle()"
     v-model="dialogVisible"
+    :title="getTitle()"
     width="700px"
     :before-close="handleClose"
   >
@@ -29,7 +29,7 @@
           <el-option label="禁用" value="0" />
         </el-select>
       </el-form-item>
-      <el-form-item label="创建时间" v-if="mode === 'view'">
+      <el-form-item v-if="mode === 'view'" label="创建时间">
         <span>{{ formData.createTime }}</span>
       </el-form-item>
     </el-form>
@@ -37,7 +37,7 @@
     <template #footer>
       <span class="dialog-footer">
         <el-button @click="handleClose">取消</el-button>
-        <el-button type="primary" @click="handleConfirm" v-if="mode !== 'view'">
+        <el-button v-if="mode !== 'view'" type="primary" @click="handleConfirm">
           确定
         </el-button>
       </span>

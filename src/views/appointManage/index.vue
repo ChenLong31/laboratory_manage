@@ -6,7 +6,7 @@
           <el-col :span="7">
             <el-form-item label="预约编号">
               <el-input
-                v-model="filterForm.number"
+                v-model="filterForm.order_no"
                 placeholder="请输入预约编号"
               />
             </el-form-item>
@@ -14,14 +14,17 @@
           <el-col :span="7">
             <el-form-item label="仪器名称">
               <el-input
-                v-model="filterForm.name"
+                v-model="filterForm.device_id"
                 placeholder="请输入仪器名称"
               />
             </el-form-item>
           </el-col>
           <el-col :span="7">
             <el-form-item label="预约人">
-              <el-input v-model="filterForm.name" placeholder="请输入预约人" />
+              <el-input
+                v-model="filterForm.user_id"
+                placeholder="请输入预约人ID"
+              />
             </el-form-item>
           </el-col>
           <el-col :span="3">
@@ -32,23 +35,23 @@
         </el-row>
         <el-row :gutter="10">
           <el-col :span="7">
-            <el-form-item label="类型">
+            <el-form-item label="订单类型">
               <el-select
+                v-model="filterForm.order_type"
                 style="width: 240px"
-                v-model="filterForm.area"
-                placeholder="请选择所属区域"
+                placeholder="请选择订单类型"
                 clearable
               >
-                <el-option label="启用" value="1" />
-                <el-option label="禁用" value="0" />
+                <el-option label="仪器预约" value="INSTRUMENT" />
+                <el-option label="培训预约" value="TRAINING" />
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="7">
             <el-form-item label="创建时间">
               <el-date-picker
-                style="width: 240px"
                 v-model="filterForm.operatingTime"
+                style="width: 240px"
                 type="daterange"
                 range-separator="至"
                 start-placeholder="开始日期"
@@ -60,13 +63,15 @@
           <el-col :span="7">
             <el-form-item label="状态">
               <el-select
-                style="width: 240px"
                 v-model="filterForm.status"
+                style="width: 240px"
                 placeholder="请选择状态"
                 clearable
               >
-                <el-option label="启用" value="1" />
-                <el-option label="禁用" value="0" />
+                <el-option label="未开始" value="NOT_STARTED" />
+                <el-option label="进行中" value="IN_PROGRESS" />
+                <el-option label="已完成" value="COMPLETED" />
+                <el-option label="已取消" value="CANCELLED" />
               </el-select>
             </el-form-item>
           </el-col>
@@ -94,15 +99,9 @@
       >
         <template #action="{ row }">
           <el-button
-            v-if="row.status === '已完成' || row.status == '已取消'"
-            type="text"
-            size="small"
-            @click="handleView(row)"
-            >查看</el-button
-          >
-          <el-button
-            v-else
-            type="text"
+            v-if="row.status !== 'CANCELLED'"
+            type="primary"
+            link
             style="color: red"
             size="small"
             @click="handleDelete(row)"
@@ -130,178 +129,105 @@ import { ref, reactive, onMounted } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { Download } from "@element-plus/icons-vue";
 import { useRouter } from "vue-router";
+import dayjs from "dayjs";
+import { get_order_list, cancel_order } from "@/api/labDevice";
 
 const router = useRouter();
 
 const filterForm = reactive({
-  name: "",
-  status: ""
+  order_no: "",
+  device_id: "",
+  user_id: "",
+  status: "",
+  order_type: "",
+  operatingTime: []
 });
 const tableHeight = ref("500px");
 
 // 修改后的表头列定义
 const columns = [
+  { label: "订单编号", prop: "order_no" },
+  { label: "仪器名称", prop: "lab_device_name" },
+  { label: "预约人", prop: "user_name" },
+  { label: "学号", prop: "student_no" },
   {
-    label: "预约订单编号",
-    prop: "number"
-  },
-  {
-    label: "仪器名称",
-    prop: "name"
+    label: "开始时间",
+    prop: "start_time",
+    formatter: (row, column, cellValue) =>
+      dayjs(cellValue).format("YYYY-MM-DD HH:mm:ss")
   },
   {
     label: "结束时间",
-    prop: "endTime"
+    prop: "end_time",
+    formatter: (row, column, cellValue) =>
+      dayjs(cellValue).format("YYYY-MM-DD HH:mm:ss")
   },
   {
     label: "下单时间",
-    prop: "orderTime"
+    prop: "create_time",
+    formatter: (row, column, cellValue) =>
+      dayjs(cellValue).format("YYYY-MM-DD HH:mm:ss")
   },
   {
     label: "支付方式",
-    prop: "paymentMethod"
+    prop: "payment_method",
+    formatter: (row, column, cellValue) => {
+      const map = { GROUP: "课题组", PERSONAL: "个人" };
+      return map[cellValue] || cellValue;
+    }
   },
   {
     label: "状态",
-    prop: "status"
+    prop: "status",
+    formatter: (row, column, cellValue) => {
+      const map = {
+        NOT_STARTED: "未开始",
+        IN_PROGRESS: "进行中",
+        COMPLETED: "已完成",
+        CANCELLED: "已取消"
+      };
+      return map[cellValue] || cellValue;
+    }
   },
-  {
-    label: "预约人",
-    prop: "booker"
-  },
-  {
-    label: "学号",
-    prop: "studentId"
-  },
-  {
-    label: "操作",
-    width: 120,
-    slot: "action"
-  }
+  { label: "操作", width: 120, slot: "action" }
 ];
 
 // 修改后的表格数据
 const tableData = ref([
   {
-    id: 1,
-    number: "7472629120361920173",
-    name: "质构仪",
-    endTime: "2025-02-28 10:30",
-    orderTime: "2025-02-28 10:30",
-    paymentMethod: "项目组",
-    status: "进行中",
-    booker: "Amanda",
-    studentId: "202434312"
-  },
-  {
-    id: 2,
-    number: "7472629120361920173",
-    name: "离心机",
-    endTime: "2025-02-28 10:30",
-    orderTime: "2025-02-28 10:30",
-    paymentMethod: "项目组",
-    status: "未开始",
-    booker: "Amanda",
-    studentId: "202434312"
-  },
-  {
-    id: 3,
-    number: "7472629120361920173",
-    name: "多光谱仪",
-    endTime: "2025-02-28 10:30",
-    orderTime: "2025-02-28 10:30",
-    paymentMethod: "项目组",
-    status: "未开始",
-    booker: "Amanda",
-    studentId: "202434312"
-  },
-  {
-    id: 4,
-    number: "7472629120361920173",
-    name: "质构仪",
-    endTime: "2025-02-28 10:30",
-    orderTime: "2025-02-28 10:30",
-    paymentMethod: "项目组",
-    status: "未开始",
-    booker: "Amanda",
-    studentId: "202434312"
-  },
-  {
-    id: 5,
-    number: "7472629120361920173",
-    name: "质构仪",
-    endTime: "2025-02-28 10:30",
-    orderTime: "2025-02-28 10:30",
-    paymentMethod: "项目组",
-    status: "已取消",
-    booker: "Amanda",
-    studentId: "202434312"
-  },
-  {
-    id: 6,
-    number: "7472629120361920173",
-    name: "质构仪",
-    endTime: "2025-02-28 10:30",
-    orderTime: "2025-02-28 10:30",
-    paymentMethod: "项目组",
-    status: "已完成",
-    booker: "Amanda",
-    studentId: "202434312"
-  },
-  {
-    id: 7,
-    number: "7472629120361920173",
-    name: "质构仪",
-    endTime: "2025-02-28 10:30",
-    orderTime: "2025-02-28 10:30",
-    paymentMethod: "项目组",
-    status: "已完成",
-    booker: "Amanda",
-    studentId: "202434312"
-  },
-  {
-    id: 8,
-    number: "7472629120361920173",
-    name: "质构仪",
-    endTime: "2025-02-28 10:30",
-    orderTime: "2025-02-28 10:30",
-    paymentMethod: "项目组",
-    status: "已完成",
-    booker: "Amanda",
-    studentId: "202434312"
-  },
-  {
-    id: 9,
-    number: "7472629120361920173",
-    name: "质构仪",
-    endTime: "2025-02-28 10:30",
-    orderTime: "2025-02-28 10:30",
-    paymentMethod: "项目组",
-    status: "已完成",
-    booker: "Amanda",
-    studentId: "202434312"
-  },
-  {
-    id: 10,
-    number: "7472629120361920173",
-    name: "质构仪",
-    endTime: "2025-02-28 10:30",
-    orderTime: "2025-02-28 10:30",
-    paymentMethod: "项目组",
-    status: "已完成",
-    booker: "Amanda",
-    studentId: "202434312"
+    id: "123",
+    order_no: "ORD202502210001",
+    order_type: "INSTRUMENT",
+    device_id: "3",
+    device_name: "原子力显微镜",
+    lab_device_id: "LD001",
+    lab_device_name: "原子力显微镜-01",
+    user_id: "10",
+    user_name: "张三",
+    student_no: "2021018221",
+    start_time: "2025-02-22T09:00:00Z",
+    end_time: "2025-02-22T11:00:00Z",
+    price: "30.00",
+    payment_method: "GROUP",
+    is_free: false,
+    status: "NOT_STARTED",
+    approval_status: "PENDING",
+    create_time: "2025-02-21T10:00:00Z"
   }
 ]);
 
 const handleTimeChange = () => {
-  filterForm.startTime = dayjs(filterForm.operatingTime[0]).format(
-    "YYYY-MM-DD HH:mm:ss"
-  );
-  filterForm.endTime = dayjs(filterForm.operatingTime[1]).format(
-    "YYYY-MM-DD HH:mm:ss"
-  );
-  delete filterForm.operatingTime;
+  if (filterForm.operatingTime?.length === 2) {
+    filterForm.start_date = dayjs(filterForm.operatingTime[0]).format(
+      "YYYY-MM-DD"
+    );
+    filterForm.end_date = dayjs(filterForm.operatingTime[1]).format(
+      "YYYY-MM-DD"
+    );
+  } else {
+    filterForm.start_date = undefined;
+    filterForm.end_date = undefined;
+  }
 };
 
 const pagination = reactive({
@@ -325,7 +251,23 @@ const handleReset = () => {
   handleSearch();
 };
 
-const getTableData = () => {};
+const getTableData = () => {
+  const params = {
+    page: pagination.currentPage,
+    page_size: pagination.pageSize,
+    order_no: filterForm.order_no || undefined,
+    device_id: filterForm.device_id || undefined,
+    user_id: filterForm.user_id || undefined,
+    status: filterForm.status || undefined,
+    order_type: filterForm.order_type || undefined,
+    start_date: filterForm.start_date || undefined,
+    end_date: filterForm.end_date || undefined
+  };
+  get_order_list(params).then(res => {
+    tableData.value = res?.content?.list ?? [];
+    pagination.total = res?.content?.total ?? 0;
+  });
+};
 
 const handleAdd = () => {
   currentRow.value = null;
@@ -346,14 +288,18 @@ const handleView = row => {
 };
 
 const handleDelete = row => {
-  ElMessageBox.confirm("确认删除该条数据?", "提示", {
+  ElMessageBox.confirm("确认取消预约?", "提示", {
     confirmButtonText: "确定",
     cancelButtonText: "取消",
     type: "warning"
   })
     .then(() => {
       // 调用删除接口
-      ElMessage.success("删除成功");
+      cancel_order({
+        order_id: row.id
+      }).then(res => {
+        ElMessage.success("取消成功");
+      });
       getTableData();
     })
     .catch(() => {
@@ -370,6 +316,9 @@ const handleCurrentChange = val => {
   pagination.currentPage = val;
   getTableData();
 };
+onMounted(() => {
+  getTableData();
+});
 </script>
 
 <style scoped>

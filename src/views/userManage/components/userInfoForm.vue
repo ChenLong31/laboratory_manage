@@ -1,9 +1,9 @@
 <template>
   <div class="form-container">
     <el-form
+      ref="formRef"
       :model="formData"
       :rules="rules"
-      ref="formRef"
       label-width="100px"
       class="form-content"
     >
@@ -80,12 +80,8 @@
       <!-- 操作按钮 -->
       <el-card class="box-card" shadow="hover">
         <div class="form-buttons">
-          <el-button 
-            type="primary" 
-            @click="submitForm" 
-            v-if="!formDisabled"
-          >
-            {{ isEdit ? '更新' : '创建' }}
+          <el-button v-if="!formDisabled" type="primary" @click="submitForm">
+            {{ isEdit ? "更新" : "创建" }}
           </el-button>
           <el-button @click="cancel"> 取消 </el-button>
         </div>
@@ -103,7 +99,7 @@ const route = useRoute();
 const router = useRouter();
 
 // 判断是否为编辑模式
-const isEdit = computed(() => route.query.mode === 'edit');
+const isEdit = computed(() => route.query.mode === "edit");
 // 判断是否为查看模式（禁用所有输入）
 const formDisabled = computed(() => route.query.mode === "view");
 
@@ -125,26 +121,24 @@ const rules = {
     { required: true, message: "请输入账号", trigger: "blur" },
     { min: 3, max: 20, message: "账号长度在3-20个字符之间", trigger: "blur" }
   ],
-  owner: [
-    { required: true, message: "请输入用户名称", trigger: "blur" }
-  ],
+  owner: [{ required: true, message: "请输入用户名称", trigger: "blur" }],
   phoneNumber: [
     { required: true, message: "请输入手机号", trigger: "blur" },
-    { pattern: /^1[3-9]\d{9}$/, message: "请输入正确的手机号码", trigger: "blur" }
+    {
+      pattern: /^1[3-9]\d{9}$/,
+      message: "请输入正确的手机号码",
+      trigger: "blur"
+    }
   ],
-  userType: [
-    { required: true, message: "请选择用户类型", trigger: "change" }
-  ],
-  status: [
-    { required: true, message: "请选择状态", trigger: "change" }
-  ]
+  userType: [{ required: true, message: "请选择用户类型", trigger: "change" }],
+  status: [{ required: true, message: "请选择状态", trigger: "change" }]
 };
 
 // 提交表单
 const submitForm = async () => {
   try {
     await formRef.value.validate();
-    
+
     if (isEdit.value) {
       // 编辑模式 - 更新用户信息
       console.log("更新用户信息:", formData);
@@ -158,7 +152,7 @@ const submitForm = async () => {
       // await createUserApi(formData);
       ElMessage.success("用户创建成功");
     }
-    
+
     // 返回用户管理列表页
     router.push("/userManage");
   } catch (error) {
@@ -220,7 +214,7 @@ onMounted(() => {
   .box-card {
     width: 100%;
     margin-bottom: 20px;
-    
+
     .card-title {
       font-weight: bold;
       color: #303133;

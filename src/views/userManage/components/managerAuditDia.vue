@@ -6,57 +6,27 @@
     :before-close="handleClose"
   >
     <el-form ref="formRef" :model="formData" label-width="120px">
-      <el-form-item label="账号" prop="accountName">
-        <el-input
-          v-model="formData.accountName"
-          disabled
-          placeholder="请输入账号"
-        />
+      <el-form-item label="账号" prop="user_account">
+        <el-input v-model="formData.user_account" disabled />
       </el-form-item>
 
-      <el-form-item label="申请人" prop="owner">
-        <el-input
-          v-model="formData.owner"
-          disabled
-          placeholder="请输入申请人"
-        />
+      <el-form-item label="申请人" prop="user_name">
+        <el-input v-model="formData.user_name" disabled />
       </el-form-item>
 
-      <el-form-item label="手机号" prop="phoneNumber">
-        <el-input
-          v-model="formData.phoneNumber"
-          disabled
-          placeholder="请输入手机号"
-        />
-      </el-form-item>
-
-      <el-form-item label="管理员类型" prop="userType">
-        <el-select
-          v-model="formData.userType"
-          disabled
-          placeholder="请选择管理员类型"
-        >
-          <el-option label="仪器管理员" value="instrument_admin" />
-          <el-option label="课题组管理员" value="group_admin" />
+      <el-form-item label="管理员类型" prop="application_type">
+        <el-select v-model="formData.application_type" disabled>
+          <el-option label="仪器管理员" value="DEVICE_ADMIN" />
+          <el-option label="课题组管理员" value="GROUP_ADMIN" />
         </el-select>
       </el-form-item>
 
-      <el-form-item label="仪器/课题组名称" prop="instrumentGroup">
-        <el-input
-          v-model="formData.instrumentGroup"
-          disabled
-          placeholder="请输入仪器/课题组名称"
-        />
+      <el-form-item label="仪器/课题组名称" prop="target_name">
+        <el-input v-model="formData.target_name" disabled />
       </el-form-item>
 
-      <el-form-item label="申请时间" prop="registerTime">
-        <el-date-picker
-          v-model="formData.registerTime"
-          type="datetime"
-          disabled
-          placeholder="选择日期时间"
-          value-format="yyyy-MM-dd HH:mm:ss"
-        />
+      <el-form-item label="申请时间" prop="submit_time">
+        <el-input v-model="formData.submit_time" disabled />
       </el-form-item>
     </el-form>
 
@@ -72,19 +42,19 @@
 <script setup>
 import { ref, reactive } from "vue";
 import { ElMessageBox, ElMessage } from "element-plus";
+import { reviewApplication } from "@/api/user";
 const emit = defineEmits(["confirm", "close"]);
-
+import dayjs from "dayjs";
 // 对话框显示状态
 const visible = ref(false);
 
-// 表单数据
+// 表单数据（与列表数据字段对齐）
 const formData = reactive({
-  accountName: "",
-  owner: "",
-  phoneNumber: "",
-  userType: "",
-  instrumentGroup: "", // 新增字段
-  registerTime: ""
+  user_account: "",
+  user_name: "",
+  application_type: "",
+  target_name: "",
+  submit_time: ""
 });
 
 const props = defineProps({
@@ -96,7 +66,10 @@ const props = defineProps({
 const open = userData => {
   visible.value = true;
   // 设置表单数据
-  Object.assign(formData, userData);
+  Object.assign(formData, {
+    ...userData,
+    submit_time: dayjs(userData.submit_time).format("YYYY-MM-DD HH:mm:ss")
+  });
 };
 
 // 关闭弹窗
@@ -114,11 +87,9 @@ const handleReject = () => {
   })
     .then(() => {
       const params = {
-        id: props.id,
-        action: "reject",
-        reason: "审核未通过"
+        application_id: props.id,
+        action: "REJECT"
       };
-      console.log("驳回数据:", params);
       audit(params);
     })
     .catch(() => {
@@ -126,16 +97,24 @@ const handleReject = () => {
     });
 };
 const audit = async params => {
-  // 发接口
-  ElMessage.success("操作成功");
-  emit("confirm", params);
-  visible.value = false;
+  try {
+    const res = await reviewApplication(params);
+    if (res?.success) {
+      ElMessage.success("操作成功");
+      emit("confirm", params);
+      visible.value = false;
+    } else {
+      ElMessage.error("操作失败");
+    }
+  } catch (e) {
+    ElMessage.error("操作失败");
+  }
 };
 // 通过操作
 const handleApprove = () => {
   const params = {
-    id: props.id,
-    action: "approve"
+    application_id: props.id,
+    action: "APPROVE"
   };
   audit(params);
 };

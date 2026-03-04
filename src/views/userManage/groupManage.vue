@@ -42,8 +42,8 @@
           <el-col :span="7">
             <el-form-item label="创建时间">
               <el-date-picker
-                style="width: 240px"
                 v-model="filterForm.operatingTime"
+                style="width: 240px"
                 type="datetimerange"
                 range-separator="至"
                 start-placeholder="开始日期"
@@ -53,19 +53,7 @@
               />
             </el-form-item>
           </el-col>
-          <el-col :span="7">
-            <el-form-item label="状态">
-              <el-select
-                style="width: 240px"
-                v-model="filterForm.status"
-                placeholder="请选择状态"
-                clearable
-              >
-                <el-option label="启用" value="1" />
-                <el-option label="禁用" value="0" />
-              </el-select>
-            </el-form-item>
-          </el-col>
+          <el-col :span="7"> </el-col>
           <el-col :span="3">
             <el-form-item>
               <el-button @click="handleReset">重置</el-button>
@@ -77,14 +65,14 @@
     <el-card shadow="never" class="mt-4">
       <div class="control">
         <el-button type="primary" @click="handleAdd">新增</el-button>
-        <el-button
+        <!-- <el-button
           :icon="Download"
           type="info"
-          @click="handleAdd"
           style="float: right"
           color="#F7F8FA"
+          @click="handleAdd"
           >下载</el-button
-        >
+        > -->
       </div>
       <pure-table
         :data="tableData"
@@ -100,17 +88,25 @@
         }"
       >
         <template #memberCount="{ row }">
-          <el-button type="text" @click="memberPop(row)">{{
-            row.memberCount
+          <el-button type="primary" link @click="memberPop(row)">{{
+            row.member_count
           }}</el-button>
         </template>
         <template #action="{ row }">
-          <el-button type="text" @click="handleView(row, 'edit')"
+          <el-button type="primary" link @click="handleView(row, 'edit')"
             >编辑</el-button
           >
-          <el-button type="text" @click="handlePop(row, '1')">额度</el-button>
-          <el-button type="text" @click="handlePop(row, '2')">充值</el-button>
-          <el-button type="text" style="color: red" @click="handleDelete(row)"
+          <el-button type="primary" link @click="handlePop(row, '1')"
+            >额度</el-button
+          >
+          <el-button type="primary" link @click="handlePop(row, '2')"
+            >充值</el-button
+          >
+          <el-button
+            type="primary"
+            link
+            style="color: red"
+            @click="handleDelete(row)"
             >删除</el-button
           >
         </template>
@@ -128,76 +124,91 @@
       </div>
     </el-card>
     <el-dialog
-      title="额度配置"
       v-model="visible"
+      title="额度配置"
       width="400px"
       :style="{ '--el-dialog-margin-top': '40vh' }"
     >
       <el-form :model="diaForm">
-        <el-form-item label="可欠费额度" :label-width="100">
-          <el-input v-model="diaForm.amount"></el-input>
+        <el-form-item label="预付款额度" prop="prepay_limit">
+          <el-input
+            v-model.number="diaForm.prepay_limit"
+            placeholder="请输入金额"
+          />
+        </el-form-item>
+        <el-form-item label="可欠费额度">
+          <el-input v-model="diaForm.credit_limit" />
         </el-form-item>
       </el-form>
-      <div slot="footer" style="text-align: center">
-        <el-button @click="visible = false">取 消</el-button>
-        <el-button type="primary" @click="btnConform('amount')"
-          >确 定</el-button
-        >
-      </div>
+      <template v-slot:footer>
+        <div style="text-align: center">
+          <el-button @click="visible = false">取 消</el-button>
+          <el-button type="primary" @click="btnConform('diaForm')"
+            >确 定</el-button
+          >
+        </div>
+      </template>
     </el-dialog>
     <el-dialog
-      title="充值"
       v-model="visible1"
+      title="充值"
       width="400px"
       :style="{ '--el-dialog-margin-top': '40vh' }"
     >
       <el-form :model="diaForm">
         <el-form-item label="充值金额" :label-width="100">
-          <el-input v-model="diaForm.charge"></el-input>
+          <el-input v-model="diaForm.charge" />
         </el-form-item>
       </el-form>
-      <div slot="footer" style="text-align: center">
-        <el-button @click="visible1 = false">取 消</el-button>
-        <el-button type="primary" @click="btnConform('charge')"
-          >确 定</el-button
-        >
-      </div>
+      <template v-slot:footer>
+        <div style="text-align: center">
+          <el-button @click="visible1 = false">取 消</el-button>
+          <el-button type="primary" @click="btnConform('charge')"
+            >确 定</el-button
+          >
+        </div>
+      </template>
     </el-dialog>
     <el-dialog
-      title="课题组信息"
       v-model="visible2"
+      title="课题组信息"
       width="600px"
       :style="{ '--el-dialog-margin-top': '30vh' }"
     >
       <el-form :model="groupInfo" :rules="groupRules">
         <el-form-item label="课题组名称" :label-width="100" prop="name">
-          <el-input
-            v-model="groupInfo.name"
-            placeholder="请输入课题组名称"
-          ></el-input>
+          <el-input v-model="groupInfo.name" placeholder="请输入课题组名称" />
         </el-form-item>
-        <el-form-item label="管理员" :label-width="100" prop="admin">
+        <el-form-item label="管理员" :label-width="100" prop="admin_account">
           <el-select
-            v-model="groupInfo.admin"
-            placeholder="请选择状态"
-            clearable
+            v-model="groupInfo.admin_account"
+            :disabled="formDisabled"
+            placeholder="请选择管理员"
+            filterable
+            remote
+            :remote-method="remoteMethod"
+            :loading="loading"
           >
-            <el-option label="启用" value="1" />
-            <el-option label="禁用" value="0" />
+            <el-option
+              v-for="item in userOptions"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
           </el-select>
         </el-form-item>
       </el-form>
-      <div slot="footer" style="text-align: center">
-        <el-button @click="visible2 = false">取 消</el-button>
-        <el-button type="primary" @click="handleView('charge')"
-          >确 定</el-button
-        >
-      </div>
+      <template v-slot:footer>
+        <div style="text-align: center">
+          <el-button @click="visible2 = false">取 消</el-button>
+          <el-button type="primary" @click="handleCreateGroup">确 定</el-button>
+        </div>
+      </template>
     </el-dialog>
 
     <el-dialog
-      title="选择成员"
       v-model="memberVisible"
+      title="选择成员"
       width="600px"
       :style="{ '--el-dialog-margin-top': '30vh' }"
     >
@@ -231,7 +242,7 @@
           <div class="selected-list">
             <div class="header">
               <span>已选 {{ selectedMembers.length }}/30</span>
-              <el-button type="text" @click="clearAll">清空</el-button>
+              <el-button type="primary" link @click="clearAll">清空</el-button>
             </div>
             <div class="selected-users">
               <div
@@ -240,7 +251,11 @@
                 class="selected-user"
               >
                 {{ member.name }}
-                <el-button type="text" size="small" @click="removeUser(member)"
+                <el-button
+                  type="primary"
+                  link
+                  size="small"
+                  @click="removeUser(member)"
                   >×</el-button
                 >
               </div>
@@ -258,11 +273,22 @@
 </template>
 
 <script setup>
+import dayjs from "dayjs";
+import {
+  get_group_list,
+  update_group_quota,
+  recharge,
+  get_group_detail,
+  add_group_members,
+  remove_group_member,
+  create_group
+} from "@/api/labDevice";
 import "plus-pro-components/es/components/dialog-form/style/css";
 import { Download } from "@element-plus/icons-vue";
 import { ref, reactive, onMounted, nextTick, computed } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useRouter } from "vue-router";
+import { getUserList } from "@/api/user";
 
 const router = useRouter();
 // 额度
@@ -272,16 +298,28 @@ const visible1 = ref(false);
 // 课题组
 const visible2 = ref(false);
 
+const userOptions = ref([]);
+const loading = ref(false);
+
 const memberVisible = ref(false); // 控制弹窗显示隐藏
 const selectedMembers = ref([]); // 存储已选成员
-const allUsers = ref([
-  // 模拟用户列表数据
-  { id: 1, name: "丁昊哲" },
-  { id: 2, name: "李书易" },
-  { id: 3, name: "顾伦" },
-  { id: 4, name: "李天泽" },
-  { id: 5, name: "刘大大" }
-]);
+const remoteMethod = () => {
+  loading.value = true;
+  getUserList({
+    page: 1,
+    page_size: 200,
+    identity_status: "APPROVED"
+  }).then(res => {
+    loading.value = false;
+    if (res.success) {
+      userOptions.value = res.content.list.map(item => ({
+        label: `${item.real_name}(${item.account})`,
+        value: item.account
+      }));
+    }
+  });
+};
+const allUsers = ref([]);
 const groupRules = {
   name: [
     {
@@ -290,7 +328,7 @@ const groupRules = {
       trigger: "blur"
     }
   ],
-  admin: [
+  admin_account: [
     {
       required: true,
       message: "请选择管理员",
@@ -298,10 +336,14 @@ const groupRules = {
     }
   ]
 };
-const groupInfo = reactive({});
+const groupInfo = reactive({
+  name: "",
+  admin_account: ""
+});
 const diaForm = reactive({
-  amount: "",
-  charge: ""
+  prepay_limit: null,
+  credit_limit: null,
+  charge: null
 });
 const filterForm = reactive({
   number: "",
@@ -315,23 +357,23 @@ const filterForm = reactive({
 const columns = [
   {
     label: "课题组编号",
-    prop: "groupNumber"
+    prop: "group_no"
   },
   {
     label: "课题组名称",
-    prop: "groupName"
+    prop: "name"
   },
   {
     label: "管理员",
-    prop: "managerName"
+    prop: "admin_name"
   },
   {
     label: "管理员手机号",
-    prop: "managerPhone"
+    prop: "admin_phone"
   },
   {
     label: "成员数量",
-    prop: "memberCount",
+    prop: "member_count",
     slot: "memberCount"
   },
   {
@@ -343,15 +385,12 @@ const columns = [
   },
   {
     label: "创建时间",
-    prop: "createTime"
-  },
-  {
-    label: "状态",
-    prop: "status",
-    formatter: row => {
-      return row.status === "1" ? "启用" : "禁用";
+    prop: "create_time",
+    formatter: (row, column, cellValue) => {
+      return dayjs(cellValue).format("YYYY-MM-DD HH:mm:ss");
     }
   },
+
   {
     label: "操作",
     width: 240,
@@ -361,124 +400,13 @@ const columns = [
 
 const tableData = ref([
   {
-    id: 1,
-    groupNumber: "admin",
-    groupName: "陈晓宇",
-    managerName: "彭琴",
-    managerPhone: "13888888888",
-    memberCount: 10,
-    balance: 1000,
-    createTime: "2025-02-28 10:30",
-    status: "1",
-    members: [
-      {
-        id: 1,
-        name: "丁昊哲"
-      },
-      {
-        id: 2,
-        name: "李书易"
-      }
-    ]
-  },
-  {
-    id: 2,
-    groupNumber: "user1",
-    groupName: "陈晓宇",
-    managerName: "彭琴",
-    managerPhone: "13888888888",
-    memberCount: 20,
-    balance: 1000,
-    createTime: "2025-02-28 10:30",
-    status: "1"
-  },
-  {
-    id: 3,
-    groupNumber: "user1",
-    groupName: "陈晓宇",
-    managerName: "彭琴",
-    managerPhone: "13888888888",
-    memberCount: 10,
-    balance: 1000,
-    createTime: "2025-02-28 10:30",
-    status: "1"
-  },
-  {
-    id: 4,
-    groupNumber: "user1",
-    groupName: "陈晓宇",
-    managerName: "彭琴",
-    managerPhone: "13888888888",
-    memberCount: 10,
-    balance: 1000,
-    createTime: "2025-02-28 10:30",
-    status: "1"
-  },
-  {
-    id: 5,
-    groupNumber: "user1",
-    groupName: "陈晓宇",
-    managerName: "彭琴",
-    managerPhone: "13888888888",
-    memberCount: 10,
-    balance: 1000,
-    createTime: "2025-02-28 10:30",
-    status: "1"
-  },
-  {
-    id: 6,
-    groupNumber: "user1",
-    groupName: "陈晓宇",
-    managerName: "彭琴",
-    managerPhone: "13888888888",
-    memberCount: 10,
-    balance: 1000,
-    createTime: "2025-02-28 10:30",
-    status: "1"
-  },
-  {
-    id: 7,
-    groupNumber: "user1",
-    groupName: "陈晓宇",
-    managerName: "彭琴",
-    managerPhone: "13888888888",
-    memberCount: 10,
-    balance: 1000,
-    createTime: "2025-02-28 10:30",
-    status: "1"
-  },
-  {
-    id: 8,
-    groupNumber: "user1",
-    groupName: "陈晓宇",
-    managerName: "彭琴",
-    managerPhone: "13888888888",
-    memberCount: 10,
-    balance: 1000,
-    createTime: "2025-02-28 10:30",
-    status: "1"
-  },
-  {
-    id: 9,
-    groupNumber: "user1",
-    groupName: "陈晓宇",
-    managerName: "彭琴",
-    managerPhone: "13888888888",
-    memberCount: 10,
-    balance: 1000,
-    createTime: "2025-02-28 10:30",
-    status: "1"
-  },
-  {
-    id: 10,
-    groupNumber: "user1",
-    groupName: "陈晓宇",
-    managerName: "彭琴",
-    managerPhone: "13888888888",
-    memberCount: 10,
-    balance: 1000,
-    createTime: "2025-02-28 10:30",
-    status: "1"
+    id: "1",
+    group_no: "XM1203231",
+    name: "生物工程学院",
+    balance: "1000.00",
+    admin_name: "李四",
+    member_count: 25,
+    create_time: "2025-10-01T08:00:00Z"
   }
 ]);
 
@@ -499,11 +427,42 @@ const handleTimeChange = () => {
 };
 const btnConform = type => {
   switch (type) {
-    case "amount":
-      console.log("diaForm.amount", currentRow.value);
+    case "diaForm":
+      if (!currentRow.value) {
+        ElMessage.error("请选择课题组");
+        return;
+      }
+      update_group_quota({
+        project_group_id: currentRow.value.id,
+        prepay_limit: Number(diaForm.prepay_limit ?? 0),
+        credit_limit: Number(diaForm.credit_limit ?? 0)
+      })
+        .then(() => {
+          ElMessage.success("额度配置成功");
+          visible.value = false;
+          getTableData();
+        })
+        .catch(() => {
+          ElMessage.error("额度配置失败");
+        });
       break;
     case "charge":
-      console.log("diaForm.charge", currentRow.value);
+      if (!currentRow.value) {
+        ElMessage.error("请选择课题组");
+        return;
+      }
+      recharge({
+        project_group_id: currentRow.value.id,
+        amount: Number(diaForm.charge ?? 0)
+      })
+        .then(() => {
+          ElMessage.success("充值成功");
+          visible1.value = false;
+          getTableData();
+        })
+        .catch(() => {
+          ElMessage.error("充值失败");
+        });
       break;
   }
 };
@@ -520,11 +479,21 @@ const handleReset = () => {
 };
 
 const getTableData = () => {
-  console.log("filterForm", filterForm);
+  get_group_list({
+    page: pagination.currentPage,
+    page_size: pagination.pageSize,
+    name: filterForm.name
+  }).then(res => {
+    tableData.value = res.content.list;
+    pagination.total = res.content.total;
+  });
 };
 
 const handleAdd = flag => {
   visible2.value = true;
+  groupInfo.name = "";
+  groupInfo.admin_account = "";
+  remoteMethod();
 };
 
 const handleView = (row, flag) => {
@@ -532,22 +501,39 @@ const handleView = (row, flag) => {
 
   visible2.value = true;
 };
+const handleCreateGroup = () => {
+  if (!groupInfo.name || !groupInfo.admin_account) {
+    ElMessage.error("请填写课题组名称并选择管理员");
+    return;
+  }
+  create_group({
+    name: groupInfo.name,
+    admin_account: groupInfo.admin_account
+  }).then(res => {
+    if (res?.success) {
+      ElMessage.success("创建成功");
+      visible2.value = false;
+      getTableData();
+    } else {
+      ElMessage.error("创建失败");
+    }
+  });
+};
 // 搜索关键词
 const searchKey = ref("");
 
 // 过滤后的用户列表
 const filteredUsers = computed(() => {
   if (!searchKey.value) return allUsers.value;
-  return allUsers.value.filter(user => user.name.includes(searchKey.value));
+  return allUsers.value.filter(
+    user =>
+      user.name.includes(searchKey.value) ||
+      user.account.includes(searchKey.value)
+  );
 });
 
 // 已选用户映射
-const selectedUsers = ref(
-  allUsers.value.reduce((acc, user) => {
-    acc[user.id] = false;
-    return acc;
-  }, {})
-);
+const selectedUsers = ref({});
 
 // 处理搜索
 const handleSearchUser = () => {
@@ -574,9 +560,25 @@ const selectUser = user => {
 };
 
 // 移除用户
-const removeUser = user => {
-  selectedMembers.value = selectedMembers.value.filter(m => m.id !== user.id);
-  selectedUsers.value[user.id] = false; // 同步左侧复选框状态
+const removeUser = async user => {
+  if (currentRow.value) {
+    try {
+      const res = await remove_group_member({
+        project_group_id: currentRow.value.id,
+        account: user.account
+      });
+      if (res.success) {
+        selectedMembers.value = selectedMembers.value.filter(
+          m => m.id !== user.id
+        );
+        selectedUsers.value[user.id] = false;
+        ElMessage.success("移除成员成功");
+        getTableData();
+      }
+    } catch (error) {
+      ElMessage.error("移除成员失败");
+    }
+  }
 };
 
 // 清空所有
@@ -587,33 +589,102 @@ const clearAll = () => {
   selectedMembers.value = [];
 };
 // 确认选择
-const confirmSelect = () => {
-  // 更新当前行的成员数据
+const confirmSelect = async () => {
   if (currentRow.value) {
-    currentRow.value.members = selectedMembers.value;
+    // 找出新添加的成员（在 selectedMembers 中但不在原始 members 中的）
+    const originalAccounts = (currentRow.value.members || []).map(
+      m => m.account
+    );
+    const newAccounts = selectedMembers.value
+      .filter(m => !originalAccounts.includes(m.account))
+      .map(m => m.account);
+
+    if (newAccounts.length > 0) {
+      try {
+        const res = await add_group_members({
+          project_group_id: currentRow.value.id,
+          accounts: newAccounts
+        });
+        if (res.success) {
+          ElMessage.success("添加成员成功");
+          memberVisible.value = false;
+          getTableData();
+        }
+      } catch (error) {
+        ElMessage.error("添加成员失败");
+      }
+    } else {
+      memberVisible.value = false;
+    }
   }
-  console.log("selectedMembers", selectedMembers.value);
-  memberVisible.value = false;
-  ElMessage.success("成员选择成功");
 };
 
-const memberPop = row => {
+const loadAllUsers = async () => {
+  const res = await getUserList({
+    page: 1,
+    page_size: 200,
+    identity_status: "APPROVED"
+  });
+  if (res?.success) {
+    allUsers.value = res.content.list.map(item => ({
+      id: item.id,
+      name: item.real_name,
+      account: item.account
+    }));
+    selectedUsers.value = allUsers.value.reduce((acc, u) => {
+      acc[u.id] = false;
+      return acc;
+    }, {});
+  }
+};
+const memberPop = async row => {
   currentRow.value = { ...row };
 
-  // 初始化已选成员
-  selectedMembers.value = row.members || [];
+  try {
+    await loadAllUsers();
+    const res = await get_group_detail({ project_group_id: row.id });
+    if (res) {
+      // 这里的 content.members 是后端返回的成员列表
+      const members = res.content.members || [];
+      // const members = [
+      //   {
+      //     user_id: "10",
+      //     account: "zhangsan",
+      //     real_name: "张三",
+      //     avatar: "https://...",
+      //     gender: "MALE",
+      //     student_no: "2021018221",
+      //     user_type: "INTERNAL",
+      //     role: "MEMBER"
+      //   }
+      // ];
+      // 转换一下格式以匹配 allUsers 的结构 (id, name, account)
+      currentRow.value.members = members.map(m => ({
+        id: m.user_id,
+        name: m.real_name,
+        account: m.account
+      }));
 
-  // 清空之前的选中状态
-  Object.keys(selectedUsers.value).forEach(key => {
-    selectedUsers.value[key] = false;
-  });
+      // 初始化已选成员
+      selectedMembers.value = [...currentRow.value.members];
 
-  // 设置当前选中成员的选中状态
-  selectedMembers.value.forEach(member => {
-    selectedUsers.value[member.id] = true;
-  });
+      // 清空之前的选中状态
+      Object.keys(selectedUsers.value).forEach(key => {
+        selectedUsers.value[key] = false;
+      });
 
-  memberVisible.value = true;
+      // 设置当前选中成员的选中状态
+      selectedMembers.value.forEach(member => {
+        if (selectedUsers.value[member.id] !== undefined) {
+          selectedUsers.value[member.id] = true;
+        }
+      });
+
+      memberVisible.value = true;
+    }
+  } catch (error) {
+    ElMessage.error("获取成员列表失败");
+  }
 };
 const handlePop = (row, index) => {
   currentRow.value = { ...row };
@@ -649,6 +720,9 @@ const handleCurrentChange = val => {
   pagination.currentPage = val;
   getTableData();
 };
+onMounted(() => {
+  getTableData();
+});
 </script>
 
 <style scoped>

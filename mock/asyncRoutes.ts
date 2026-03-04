@@ -189,9 +189,9 @@ export default defineFakeRoute([
         success: true,
         data: [
           // xxxRouetr,
-          systemManagementRouter,
-          systemMonitorRouter,
-          permissionRouter
+          // systemManagementRouter,
+          // systemMonitorRouter,
+          // permissionRouter
         ]
       };
     }

@@ -5,7 +5,6 @@
     title="预约记录"
     width="1580px"
     :before-close="handleClose"
-    @open="fetchAppointments"
   >
     <div class="calendar-container">
       <!-- 顶部控制栏 -->
@@ -23,17 +22,21 @@
       <!-- 甘特图主体 -->
       <div class="gantt-chart">
         <g-gantt-chart
-          width="1500px"
-          :chart-start="startDate"
-          :chart-end="endDate"
+          :chart-start="chartStart"
+          :chart-end="chartEnd"
           precision="hour"
-          bar-start="startDate"
-          bar-end="endDate"
+          bar-start="start_time"
+          bar-end="end_time"
           color-scheme="creamy"
           :grid="true"
           :row-height="60"
         >
-          <g-gantt-row :bars="item" v-for="(item, index) in barComputed" />
+          <g-gantt-row
+            v-for="instance in instances"
+            :key="instance.lab_device_id"
+            :label="instance.lab_device_name"
+            :bars="instance.reservations"
+          />
         </g-gantt-chart>
       </div>
     </div>
@@ -41,242 +44,175 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import { ElMessage } from "element-plus";
 import dayjs from "dayjs";
+import { get_device_schedule } from "@/api/labDevice";
 
 const props = defineProps({
   instrumentId: {
-    type: Number,
-    required: true
+    type: [Number, String],
+    default: ""
   }
 });
 
 const emit = defineEmits(["update:modelValue", "close"]);
-const myCustomColors = {
-  primary: "#42b983", // 主要条形颜色
-  secondary: "#165DFF", // 次要颜色
-  hoverHighlight: "rgba(66, 185, 131, 0.3)" // 悬停高亮
-};
+
 const visible = ref(false);
-const currentDate = ref(dayjs()); // 使用 dayjs 对象
-const appointments = ref([]);
+const currentDate = ref(dayjs().toDate()); // 当前选中日期
+const instances = ref([]); // 仪器实例及预约数据
 
-// 计算时间范围：从前一天的12点到后一天的12点
-const startDate = computed(() => {
-  return dayjs(currentDate.value)
-    .subtract(1, "day")
-    .hour(18)
-    .minute(0)
-    .second(0)
-    .millisecond(0)
-    .toDate();
+// 图表显示的开始时间：选中日期的 00:00
+const chartStart = computed(() => {
+  return dayjs(currentDate.value).startOf("day").format("YYYY-MM-DD HH:mm");
 });
 
-const endDate = computed(() => {
-  return dayjs(currentDate.value)
-    .add(1, "day")
-    .hour(6)
-    .minute(0)
-    .second(0)
-    .millisecond(0)
-    .toDate();
+// 图表显示的结束时间：选中日期的 23:59
+const chartEnd = computed(() => {
+  return dayjs(currentDate.value).endOf("day").format("YYYY-MM-DD HH:mm");
 });
-const barComputed = computed(() => {
-  return barList.value.map(item => {
-    return item.map(bar => {
-      return {
-        ...bar,
-        ganttBarConfig: {
-          ...bar.ganttBarConfig,
-          html: `<div class="appointment-tooltip">
-                  <div class="appointment-user">预约人：${bar.ganttBarConfig.name}</div>
-                  <div class="appointment-time">预约时间：${dayjs(bar.startDate).format("HH:mm:ss")} - ${dayjs(bar.endDate).format("HH:mm:ss")}</div>
-                </div>`,
-          style: {
-            background: "#E5F1FF",
-            color: "black"
-          }
-        }
-      };
-    });
-  });
-});
-const barList = ref([
-  [
-    {
-      startDate: "2026-01-14 13:00",
-      endDate: "2026-01-14 19:00",
-      ganttBarConfig: {
-        id: "unique-id-1",
-        name: "陈鹏"
-      }
-    }
-  ],
-  [
-    {
-      startDate: "2026-01-14 00:00",
-      endDate: "2026-01-14 12:00",
-      ganttBarConfig: {
-        id: "another-unique-id-2",
-        name: "陈鸟"
-      }
-    }
-  ]
-]);
 
-// 获取预约数据（模拟接口）
+// 获取预约数据
 const fetchAppointments = async () => {
+  if (!props.instrumentId) return;
+
+  const dateStr = dayjs(currentDate.value).format("YYYY-MM-DD");
   try {
-    // 示例数据，实际应调用 API
-    const mockData = [
-      {
-        id: 1,
-        name: "陈鹏",
-        startHour: 8,
-        startMinute: 30,
-        durationMinutes: 60,
-        timeRange: "08:30 - 09:30"
-      },
-      {
-        id: 2,
-        name: "陈鹏",
-        startHour: 10,
-        startMinute: 0,
-        durationMinutes: 60,
-        timeRange: "10:00 - 11:00"
-      }
-    ];
-    appointments.value = mockData;
+    const res = await get_device_schedule({
+      device_id: props.instrumentId,
+      start_date: dateStr,
+      end_date: dateStr
+    });
+
+    if (res.success) {
+      // 处理返回数据，适配甘特图格式
+      instances.value = (res.content.instances || []).map(inst => ({
+        lab_device_id: inst.lab_device_id,
+        lab_device_name: inst.lab_device_name,
+        reservations: (inst.reservations || []).map(resv => ({
+          ...resv,
+          // 确保时间格式正确
+          start_time: dayjs(resv.start_time).format("YYYY-MM-DD HH:mm"),
+          end_time: dayjs(resv.end_time).format("YYYY-MM-DD HH:mm"),
+          ganttBarConfig: {
+            id: resv.order_id,
+            label: "", // 不在条内显示文字，使用tooltip
+            style: {
+              background: getStatusColor(resv.status),
+              borderRadius: "4px",
+              color: "white"
+            },
+            html: `<div class="appointment-tooltip" style="padding: 4px;">
+                    <div>预约人ID：${resv.user_id}</div>
+                    <div>时间：${dayjs(resv.start_time).format("HH:mm")} - ${dayjs(resv.end_time).format("HH:mm")}</div>
+                    <div>状态：${getStatusText(resv.status)}</div>
+                  </div>`
+          }
+        }))
+      }));
+    }
   } catch (error) {
-    ElMessage.error("加载预约失败");
+    console.error(error);
+    ElMessage.error("加载预约记录失败");
   }
 };
 
+const getStatusColor = status => {
+  const map = {
+    APPROVED: "#67C23A", // 绿色
+    PENDING: "#E6A23C", // 橙色
+    REJECTED: "#F56C6C", // 红色
+    COMPLETED: "#409EFF", // 蓝色
+    CANCELLED: "#909399" // 灰色
+  };
+  return map[status] || "#409EFF";
+};
+
+const getStatusText = status => {
+  const map = {
+    APPROVED: "已批准",
+    PENDING: "待审批",
+    REJECTED: "已驳回",
+    COMPLETED: "已完成",
+    CANCELLED: "已取消"
+  };
+  return map[status] || status;
+};
+
+// 日期切换逻辑
 const prevDay = () => {
-  currentDate.value = dayjs(currentDate.value).subtract(1, "day");
+  currentDate.value = dayjs(currentDate.value).subtract(1, "day").toDate();
 };
 
 const nextDay = () => {
-  currentDate.value = dayjs(currentDate.value).add(1, "day");
+  currentDate.value = dayjs(currentDate.value).add(1, "day").toDate();
 };
 
-const onDateChange = date => {
-  if (date) {
-    currentDate.value = dayjs(date);
+const onDateChange = val => {
+  if (val) {
+    currentDate.value = val;
   }
 };
 
+// 监听日期变化重新获取数据
+watch(currentDate, () => {
+  if (visible.value) {
+    fetchAppointments();
+  }
+});
+
 const handleClose = () => {
-  emit("close");
   visible.value = false;
+  emit("close");
 };
 
-// 打开弹窗的方法
-const open = () => {
+// 打开弹窗的方法，接收 row 数据
+const open = row => {
   visible.value = true;
+  // 重置为今天
+  currentDate.value = dayjs().toDate();
+  // fetchAppointments();
 };
+
 const close = () => {
   visible.value = false;
   emit("close");
 };
+
 defineExpose({
   open,
   close
 });
 </script>
+
 <style scoped>
 .calendar-container {
   width: 100%;
-  max-height: 70vh;
-  overflow-y: auto;
+  height: 600px;
+  display: flex;
+  flex-direction: column;
 }
 
 .controls {
   display: flex;
   gap: 10px;
-  margin-bottom: 10px;
+  margin-bottom: 20px;
   align-items: center;
+  padding: 0 20px;
 }
 
 .gantt-chart {
-  width: 1500px;
-  height: 600px;
-  display: flex;
-  border: 1px solid #dcdfe6;
-  background-color: #f5f7fa;
-}
-
-.time-axis {
-  width: 80px;
-  border-right: 1px solid #dcdfe6;
-  padding: 10px 0;
-  background-color: #fff;
-}
-
-.hour-label {
-  font-size: 12px;
-  text-align: right;
-  padding: 5px 10px;
-}
-
-.grid {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.day-header {
-  padding: 10px;
-  background-color: #f0f9ff;
-  font-weight: bold;
-  text-align: center;
-}
-
-.time-slots {
-  display: flex;
-  flex-direction: column;
-  border-right: 1px solid #dcdfe6;
-}
-
-.slot {
-  position: relative;
-  border-bottom: 1px solid #eee;
-  display: flex;
-  align-items: center;
-  padding-left: 10px;
-}
-
-.slot-time {
-  font-size: 12px;
-  color: #666;
-}
-
-.appointments {
-  position: relative;
-  flex: 1;
-  background-color: #fff;
-}
-
-.appointment-item {
-  position: absolute;
-  background-color: #e6f7ff;
-  border: 1px solid #91d5ff;
-  border-radius: 4px;
-  padding: 4px 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.appointment-item:hover {
-  opacity: 0.8;
-}
-
-.appointment-content {
-  font-size: 12px;
-  white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
+}
+
+/* 穿透样式调整甘特图 */
+:deep(.g-gantt-row-label) {
+  width: 150px;
+  font-weight: bold;
+}
+
+:deep(.g-gantt-bar) {
+  border-radius: 4px;
 }
 </style>
