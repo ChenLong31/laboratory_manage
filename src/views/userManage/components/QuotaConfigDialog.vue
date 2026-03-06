@@ -45,7 +45,7 @@ const formData = reactive({
   creditAmount: null
 });
 const props = defineProps({
-  id: String | Number
+  id: [String, Number]
 });
 // 表单校验规则
 const rules = {

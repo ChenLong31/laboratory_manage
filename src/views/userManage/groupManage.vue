@@ -7,6 +7,7 @@
             <el-form-item label="课题组编号">
               <el-input
                 v-model="filterForm.number"
+                style="width: 240px"
                 placeholder="请输入课题组编号"
               />
             </el-form-item>
@@ -15,6 +16,7 @@
             <el-form-item label="课题组名称">
               <el-input
                 v-model="filterForm.name"
+                style="width: 240px"
                 placeholder="请输入课题组名称"
               />
             </el-form-item>
@@ -23,6 +25,7 @@
             <el-form-item label="管理员">
               <el-input
                 v-model="filterForm.manager"
+                style="width: 240px"
                 placeholder="请输入管理员"
               />
             </el-form-item>
@@ -36,7 +39,11 @@
         <el-row :gutter="10">
           <el-col :span="7">
             <el-form-item label="管理员手机号">
-              <el-input v-model="filterForm.phone" placeholder="请输入手机号" />
+              <el-input
+                v-model="filterForm.phone"
+                style="width: 240px"
+                placeholder="请输入手机号"
+              />
             </el-form-item>
           </el-col>
           <el-col :span="7">
@@ -53,7 +60,7 @@
               />
             </el-form-item>
           </el-col>
-          <el-col :span="7"> </el-col>
+          <el-col :span="7" />
           <el-col :span="3">
             <el-form-item>
               <el-button @click="handleReset">重置</el-button>
@@ -729,14 +736,15 @@ onMounted(() => {
 .control {
   margin-bottom: 10px;
 }
+
 .mt-4 {
   margin-top: 1rem;
 }
 
 .pagination {
-  margin-top: 1rem;
   display: flex;
   justify-content: flex-end;
+  margin-top: 1rem;
 }
 
 .member-select-container {
@@ -773,8 +781,8 @@ onMounted(() => {
 
 .selected-list .header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   margin-bottom: 10px;
 }
 
@@ -785,8 +793,8 @@ onMounted(() => {
 
 .selected-user {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   padding: 8px 0;
   border-bottom: 1px solid #eee;
 }

@@ -7,6 +7,7 @@
             <el-form-item label="用户账号">
               <el-input
                 v-model="filterForm.account"
+                style="width: 240px"
                 placeholder="请输入用户账号"
               />
             </el-form-item>
@@ -15,6 +16,7 @@
             <el-form-item label="用户名称">
               <el-input
                 v-model="filterForm.real_name"
+                style="width: 240px"
                 placeholder="请输入用户名称"
               />
             </el-form-item>
@@ -41,7 +43,11 @@
         <el-row :gutter="10">
           <el-col :span="7">
             <el-form-item label="手机号">
-              <el-input v-model="filterForm.phone" placeholder="请输入手机号" />
+              <el-input
+                v-model="filterForm.phone"
+                style="width: 240px"
+                placeholder="请输入手机号"
+              />
             </el-form-item>
           </el-col>
           <el-col :span="7">
@@ -133,8 +139,8 @@
         </template>
         <template #action="{ row }">
           <el-button
-            type="primary"
             v-if="row.identity_status === 'PENDING'"
+            type="primary"
             link
             @click="handlePop(row)"
             >审核</el-button
@@ -329,12 +335,14 @@ onMounted(() => {
 .control {
   margin-bottom: 10px;
 }
+
 .mt-4 {
   margin-top: 1rem;
 }
+
 .pagination {
-  margin-top: 1rem;
   display: flex;
   justify-content: flex-end;
+  margin-top: 1rem;
 }
 </style>

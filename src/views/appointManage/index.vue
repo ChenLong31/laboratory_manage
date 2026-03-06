@@ -7,6 +7,7 @@
             <el-form-item label="预约编号">
               <el-input
                 v-model="filterForm.order_no"
+                style="width: 240px"
                 placeholder="请输入预约编号"
               />
             </el-form-item>
@@ -15,6 +16,7 @@
             <el-form-item label="仪器名称">
               <el-input
                 v-model="filterForm.device_id"
+                style="width: 240px"
                 placeholder="请输入仪器名称"
               />
             </el-form-item>
@@ -23,6 +25,7 @@
             <el-form-item label="预约人">
               <el-input
                 v-model="filterForm.user_id"
+                style="width: 240px"
                 placeholder="请输入预约人ID"
               />
             </el-form-item>
@@ -325,13 +328,14 @@ onMounted(() => {
 .control {
   margin-bottom: 10px;
 }
+
 .mt-4 {
   margin-top: 1rem;
 }
 
 .pagination {
-  margin-top: 1rem;
   display: flex;
   justify-content: flex-end;
+  margin-top: 1rem;
 }
 </style>

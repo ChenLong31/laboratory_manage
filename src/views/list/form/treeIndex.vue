@@ -394,29 +394,30 @@ const handleModalSuccess = () => {
 .control {
   margin-bottom: 10px;
 }
+
 .mt-4 {
   margin-top: 1rem;
 }
 
 .pagination {
-  margin-top: 1rem;
   display: flex;
   justify-content: flex-end;
+  margin-top: 1rem;
 }
 
 .tree-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
 }
 
 .custom-tree-node {
-  flex: 1;
   display: flex;
+  flex: 1;
   align-items: center;
   justify-content: space-between;
-  font-size: 14px;
   padding-right: 8px;
+  font-size: 14px;
 }
 
 .tree-card {

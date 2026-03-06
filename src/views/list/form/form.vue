@@ -174,13 +174,14 @@ const handleModalSuccess = () => {
 .control {
   margin-bottom: 10px;
 }
+
 .mt-4 {
   margin-top: 1rem;
 }
 
 .pagination {
-  margin-top: 1rem;
   display: flex;
   justify-content: flex-end;
+  margin-top: 1rem;
 }
 </style>

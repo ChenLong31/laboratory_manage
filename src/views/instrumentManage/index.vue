@@ -7,6 +7,7 @@
             <el-form-item label="仪器编号">
               <el-input
                 v-model="filterForm.number"
+                style="width: 240px"
                 placeholder="请输入仪器编号"
               />
             </el-form-item>
@@ -15,6 +16,7 @@
             <el-form-item label="仪器名称">
               <el-input
                 v-model="filterForm.name"
+                style="width: 240px"
                 placeholder="请输入仪器名称"
               />
             </el-form-item>
@@ -407,13 +409,14 @@ onMounted(() => {
 .control {
   margin-bottom: 10px;
 }
+
 .mt-4 {
   margin-top: 1rem;
 }
 
 .pagination {
-  margin-top: 1rem;
   display: flex;
   justify-content: flex-end;
+  margin-top: 1rem;
 }
 </style>

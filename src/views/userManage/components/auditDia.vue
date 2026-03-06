@@ -75,7 +75,7 @@ const formData = reactive({
 });
 
 const props = defineProps({
-  id: String | Number,
+  id: [String, Number],
   data: Object // 接收外部传入的用户数据
 });
 
@@ -116,7 +116,7 @@ const handleReject = () => {
 };
 const audit = async params => {
   // 发接口
-  ElMessage.success("操作成功");
+  // ElMessage.success("操作成功");
   emit("confirm", params);
   visible.value = false;
 };

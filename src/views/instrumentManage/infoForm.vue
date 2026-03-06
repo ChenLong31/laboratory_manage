@@ -177,15 +177,13 @@
         </template>
         <el-row :gutter="20">
           <el-col :span="24">
-            <el-form-item label="管理员" prop="admin_accounts">
+            <el-form-item label="管理员" prop="admin_user_ids">
               <el-select
-                v-model="formData.admin_accounts"
+                v-model="formData.admin_user_ids"
                 :disabled="formDisabled"
                 placeholder="请选择管理员"
                 multiple
                 filterable
-                remote
-                :remote-method="remoteMethod"
                 :loading="loading"
               >
                 <el-option
@@ -254,7 +252,7 @@ const formData = reactive({
   min_duration: 30,
   max_advance_days: 7,
   status: "IDLE",
-  admin_accounts: []
+  admin_user_ids: []
 });
 
 // 表单验证规则
@@ -264,7 +262,7 @@ const rules = {
   floor_id: [{ required: true, message: "请选择所属楼层", trigger: "change" }],
   area_id: [{ required: true, message: "请选择所属区域", trigger: "change" }],
   status: [{ required: true, message: "请选择状态", trigger: "change" }],
-  admin_accounts: [
+  admin_user_ids: [
     { required: true, message: "请选择管理员", trigger: "change" }
   ]
 };
@@ -274,7 +272,7 @@ const getOptions = async () => {
   if (floorRes.success) {
     floorOptions.value = floorRes.content.list.map(item => ({
       label: item.name,
-      value: item.floor_id
+      value: item.id
     }));
   }
   // const areaRes = await getAreaList({ page: 1, page_size: 200 });
@@ -317,19 +315,16 @@ const initData = async () => {
         Object.assign(formData, {
           ...data,
           available_time: [data.available_start_time, data.available_end_time],
-          admin_accounts: data.admins.map(admin => admin.account)
+          admin_user_ids: data.admins.map(admin => admin.id)
         });
-        // 初始化管理员下拉选项
-        userOptions.value = data.admins.map(admin => ({
-          label: `${admin.nick}(${admin.account})`,
-          value: admin.account
-        }));
+        console.log("formData", formData);
       }
     }
   }
 };
 
 onMounted(async () => {
+  await remoteMethod();
   await getOptions();
   initData();
 });
@@ -380,22 +375,26 @@ const cancel = () => {
 :deep(.el-form-item__label) {
   justify-content: flex-start;
 }
+
 :deep(.el-form-item) {
   flex-direction: column;
 }
+
 .form-container {
   .box-card {
     width: 100%;
     margin-bottom: 10px;
+
     .card-title {
+      font-size: 16px;
       font-weight: bold;
       color: #303133;
-      font-size: 16px;
     }
 
     .form-buttons {
-      text-align: right;
       float: right;
+      text-align: right;
+
       .el-button {
         margin-right: 10px;
       }

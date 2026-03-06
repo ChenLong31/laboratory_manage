@@ -58,7 +58,7 @@ const formData = reactive({
 });
 
 const props = defineProps({
-  id: String | Number,
+  id: [String, Number],
   data: Object // 接收外部传入的用户数据
 });
 

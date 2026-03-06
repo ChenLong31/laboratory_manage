@@ -1,6 +1,6 @@
 // 模拟后端动态生成路由
 import { defineFakeRoute } from "vite-plugin-fake-server/client";
-import { system, monitor, permission, frame, tabs } from "@/router/enums";
+import { system, monitor, permission } from "@/router/enums";
 
 /**
  * roles：页面级别权限，这里模拟二种 "admin"、"common"
@@ -8,7 +8,7 @@ import { system, monitor, permission, frame, tabs } from "@/router/enums";
  * common：普通角色
  */
 
-const xxxRouetr = {
+const _xxxRouetr = {
   path: "/instrumentManage",
   meta: {
     title: "仪器管理"
@@ -33,7 +33,7 @@ const xxxRouetr = {
   ]
 };
 
-const systemManagementRouter = {
+const _systemManagementRouter = {
   path: "/system",
   meta: {
     icon: "ri:settings-3-line",
@@ -80,7 +80,7 @@ const systemManagementRouter = {
   ]
 };
 
-const systemMonitorRouter = {
+const _systemMonitorRouter = {
   path: "/monitor",
   meta: {
     icon: "ep:monitor",
@@ -131,7 +131,7 @@ const systemMonitorRouter = {
   ]
 };
 
-const permissionRouter = {
+const _permissionRouter = {
   path: "/permission",
   meta: {
     title: "menus.purePermission",

@@ -3,6 +3,7 @@
     <el-upload
       v-model:file-list="fileList"
       :action="uploadAction"
+      :http-request="customRequest"
       :on-success="handleSuccess"
       :on-error="handleError"
       :before-upload="beforeUpload"
@@ -28,6 +29,7 @@
 import { ref, onMounted, watch } from "vue";
 import { ElMessage } from "element-plus";
 import { Upload } from "@element-plus/icons-vue";
+import { fileUpload as apiFileUpload } from "@/api/user";
 
 // 定义 props
 interface Props {
@@ -68,12 +70,69 @@ const previewImageUrl = ref("");
 // 文件上传地址
 const uploadAction = ref(props.action);
 
+const toBase64 = (file: File) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = error => reject(error);
+  });
+
+const customRequest = async (option: any) => {
+  try {
+    const base64 = await toBase64(option.file);
+    const res: any = await apiFileUpload({
+      file_name: option.file.name,
+      file_base64: base64
+    });
+    if (res?.success) {
+      const url =
+        res?.content?.path || res?.content?.file_url || res?.content || "";
+      option.onSuccess(res, option.file);
+      emit("change", url);
+      const updated = [...fileList.value];
+      const idx = updated.findIndex(f => f.uid === option.file.uid);
+      if (idx !== -1) {
+        updated[idx].url = url;
+        updated[idx].status = "success";
+      } else {
+        updated.push({
+          name: option.file.name,
+          url,
+          uid: option.file.uid,
+          status: "success"
+        });
+      }
+      updateFileList(updated);
+    } else {
+      option.onError(new Error("upload failed"));
+      ElMessage.error("上传失败");
+    }
+  } catch (e) {
+    option.onError(e);
+    ElMessage.error("上传失败");
+  }
+};
+
 // 监听 code 变化，获取已上传的文件列表
 watch(
   () => props.code,
   newCode => {
     if (newCode) {
-      fetchFileList(newCode);
+      // 如果 code 是一个 URL 字符串，直接显示
+      if (typeof newCode === "string" && newCode.startsWith("http")) {
+        fileList.value = [
+          {
+            name: "缩略图",
+            url: newCode,
+            status: "success"
+          }
+        ];
+      } else {
+        fetchFileList(newCode);
+      }
+    } else {
+      fileList.value = [];
     }
   },
   { immediate: true }
@@ -175,10 +234,12 @@ onMounted(() => {
   height: 80px;
   line-height: 76px;
 }
+
 .el-upload-list__item {
   width: 80px;
   height: 80px;
 }
+
 .el-upload-list__item-thumbnail {
   width: 100%;
   height: 100%;

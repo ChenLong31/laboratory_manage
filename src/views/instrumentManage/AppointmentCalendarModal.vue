@@ -187,18 +187,18 @@ defineExpose({
 
 <style scoped>
 .calendar-container {
-  width: 100%;
-  height: 600px;
   display: flex;
   flex-direction: column;
+  width: 100%;
+  height: 600px;
 }
 
 .controls {
   display: flex;
   gap: 10px;
-  margin-bottom: 20px;
   align-items: center;
   padding: 0 20px;
+  margin-bottom: 20px;
 }
 
 .gantt-chart {

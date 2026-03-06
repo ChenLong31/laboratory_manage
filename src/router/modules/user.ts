@@ -1,6 +1,3 @@
-import { $t } from "@/plugins/i18n";
-import { list } from "@/router/enums";
-
 export default {
   path: "/userManage",
   redirect: "/userManage/list",

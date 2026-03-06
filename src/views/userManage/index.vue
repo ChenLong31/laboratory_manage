@@ -7,6 +7,7 @@
             <el-form-item label="用户账号">
               <el-input
                 v-model="filterForm.account"
+                style="width: 240px"
                 placeholder="请输入用户账号"
               />
             </el-form-item>
@@ -15,6 +16,7 @@
             <el-form-item label="用户名称">
               <el-input
                 v-model="filterForm.real_name"
+                style="width: 240px"
                 placeholder="请输入用户名称"
               />
             </el-form-item>
@@ -41,7 +43,11 @@
         <el-row :gutter="10">
           <el-col :span="7">
             <el-form-item label="手机号">
-              <el-input v-model="filterForm.phone" placeholder="请输入手机号" />
+              <el-input
+                v-model="filterForm.phone"
+                style="width: 240px"
+                placeholder="请输入手机号"
+              />
             </el-form-item>
           </el-col>
           <el-col :span="7">
@@ -106,8 +112,8 @@
         </template>
         <template #action="{ row }">
           <el-button
-            type="primary"
             v-if="userInfo.account === 'admin123'"
+            type="primary"
             link
             @click="handleView(row, 'edit')"
             >编辑</el-button
@@ -123,6 +129,9 @@
             @click="handleDelete(row)"
             >删除</el-button
           >
+        </template>
+        <template #identity_status>
+          <el-tag type="success">已通过</el-tag>
         </template>
       </pure-table>
 
@@ -153,7 +162,7 @@ import { Download } from "@element-plus/icons-vue";
 import { ref, reactive, onMounted, nextTick } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useRouter } from "vue-router";
-import { getUserList } from "@/api/user";
+import { getUserList, deleteUser } from "@/api/user";
 import QuotaConfigDialog from "./components/QuotaConfigDialog.vue";
 import dayjs from "dayjs";
 const router = useRouter();
@@ -179,16 +188,31 @@ const columns = [
   { label: "账号", prop: "account" },
   { label: "用户名称", prop: "real_name" },
   { label: "手机号", prop: "mobile" },
-  { label: "用户类型", prop: "user_type" },
   {
-    label: "状态",
-    prop: "identity_status",
+    label: "用户类型",
+    prop: "user_type",
     formatter: (row, column, cellValue) => {
-      return cellValue === "PENDING"
-        ? "待审批"
-        : cellValue === "APPROVED"
-          ? "已通过"
-          : "已驳回";
+      return cellValue === "INTERNAL"
+        ? "内部用户"
+        : cellValue === "EXTERNAL"
+          ? "外部用户"
+          : "--";
+    }
+  },
+  {
+    label: "审核状态",
+    prop: "identity_status",
+    slot: "identity_status"
+  },
+  {
+    label: "启用状态",
+    prop: "status",
+    formatter: (row, column, cellValue) => {
+      return cellValue === "ENABLE"
+        ? "已启用"
+        : cellValue === "DISABLE"
+          ? "已禁用"
+          : "未知状态";
     }
   },
   {
@@ -290,7 +314,11 @@ const handleView = (row, flag) => {
   modalMode.value = flag;
   router.push({
     path: "/userManage/userInfoForm",
-    query: { mode: modalMode.value }
+    query: {
+      mode: modalMode.value,
+      rowData: JSON.stringify(row),
+      id: row.id
+    }
   });
 };
 
@@ -318,9 +346,10 @@ const handleDelete = row => {
     type: "warning"
   })
     .then(() => {
-      // 调用删除接口
-      ElMessage.success("删除成功");
-      getTableData();
+      deleteUser({ user_id: row.id }).then(() => {
+        ElMessage.success("删除成功");
+        getTableData();
+      });
     })
     .catch(() => {});
 };
@@ -346,12 +375,14 @@ onMounted(() => {
 .control {
   margin-bottom: 10px;
 }
+
 .mt-4 {
   margin-top: 1rem;
 }
+
 .pagination {
-  margin-top: 1rem;
   display: flex;
   justify-content: flex-end;
+  margin-top: 1rem;
 }
 </style>

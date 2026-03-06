@@ -71,7 +71,7 @@ type ResultTable = {
 /** 登录 */
 export const getLogin = (data?: object) => {
   // return http.request("post", `/login`, {
-  return http.request("post", `${testUrl}/api/v1/user/login`, {
+  return http.request<UserResult>("post", `${testUrl}/api/v1/user/login`, {
     data
   });
 };
@@ -101,6 +101,27 @@ export const getApplicationList = (data?: object) => {
     }
   );
 };
+
+/** 管理员添加用户 */
+export const adminAddUser = (data?: object) => {
+  return http.request("post", `${testUrl}/api/v1/user/admin_add_user`, {
+    data
+  });
+};
+
+/** 更新用户信息 */
+export const updateUser = (data?: object) => {
+  return http.request("post", `${testUrl}/api/v1/user/update_user`, {
+    data
+  });
+};
+
+/** 删除用户 */
+export const deleteUser = (data?: object) => {
+  return http.request("post", `${testUrl}/api/v1/user/delete_user`, {
+    data
+  });
+};
 /** 审核管理员申请 */
 export const reviewApplication = (data?: object) => {
   return http.request(
@@ -125,4 +146,17 @@ export const getMine = (data?: object) => {
 /** 账户设置-个人安全日志 */
 export const getMineLogs = (data?: object) => {
   return http.request<ResultTable>("get", "/mine-logs", { data });
+};
+
+/** 获取用户详情 */
+export const getUserDetail = (data?: object) => {
+  return http.request("post", `${testUrl}/api/v1/user/get_user_detail`, {
+    data
+  });
+};
+/** 获取用户详情 */
+export const fileUpload = (data?: object) => {
+  return http.request("post", `${testUrl}/api/v1/file/upload`, {
+    data
+  });
 };
