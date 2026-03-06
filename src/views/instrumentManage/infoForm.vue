@@ -343,6 +343,7 @@ const submitForm = async () => {
     let res;
     if (route.query.mode === "edit") {
       params.device_id = route.query.id; // 确保传device_id
+      params.thumbnail_url = params.thumbnail_path || "";
       res = await updateDevice(params);
     } else {
       res = await createDevice(params);
