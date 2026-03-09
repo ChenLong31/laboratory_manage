@@ -59,7 +59,7 @@ const props = withDefaults(defineProps<Props>(), {
 // 定义 emit
 const emit = defineEmits<{
   "update:code": [value: string];
-  change: [files: Array<any>];
+  change: [value: string];
 }>();
 
 // 响应式数据
@@ -74,7 +74,11 @@ const toBase64 = (file: File) =>
   new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
-    reader.onload = () => resolve(String(reader.result));
+    reader.onload = () => {
+      const result = String(reader.result ?? "");
+      const commaIndex = result.indexOf(",");
+      resolve(commaIndex >= 0 ? result.slice(commaIndex + 1) : result);
+    };
     reader.onerror = error => reject(error);
   });
 
@@ -86,10 +90,14 @@ const customRequest = async (option: any) => {
       file_base64: base64
     });
     if (res?.success) {
-      const url =
-        res?.content?.path || res?.content?.file_url || res?.content || "";
+      // 优先使用返回的 url，其次是 path
+      const url = res?.content?.path || res?.content?.url || "";
       option.onSuccess(res, option.file);
+
+      // 更新 v-model 和触发 change 事件
+      emit("update:code", url);
       emit("change", url);
+
       const updated = [...fileList.value];
       const idx = updated.findIndex(f => f.uid === option.file.uid);
       if (idx !== -1) {
@@ -103,7 +111,7 @@ const customRequest = async (option: any) => {
           status: "success"
         });
       }
-      updateFileList(updated);
+      fileList.value = updated;
     } else {
       option.onError(new Error("upload failed"));
       ElMessage.error("上传失败");
@@ -119,8 +127,8 @@ watch(
   () => props.code,
   newCode => {
     if (newCode) {
-      // 如果 code 是一个 URL 字符串，直接显示
-      if (typeof newCode === "string" && newCode.startsWith("http")) {
+      // 如果 code 是一个字符串，直接显示
+      if (typeof newCode === "string" && newCode.trim() !== "") {
         fileList.value = [
           {
             name: "缩略图",
@@ -164,9 +172,7 @@ const fetchFileList = async (code: string) => {
 // 文件上传成功回调
 const handleSuccess = (response: any, file: any, fileList: any[]) => {
   ElMessage.success("上传成功");
-  emit("change", response.annex);
-  // 更新文件列表
-  updateFileList(fileList);
+  // customRequest 已经处理了 emit，这里不需要重复处理
 };
 
 // 文件上传失败回调
@@ -198,7 +204,12 @@ const handleRemove = (file: any) => {
   const index = fileList.value.findIndex(item => item.uid === file.uid);
   if (index !== -1) {
     fileList.value.splice(index, 1);
-    updateFileList(fileList.value);
+    // 如果文件列表为空，清空 code
+    if (fileList.value.length === 0) {
+      emit("update:code", "");
+      emit("change", "");
+    }
+    // updateFileList(fileList.value);
   }
 };
 
