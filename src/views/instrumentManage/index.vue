@@ -142,6 +142,9 @@
           <el-button type="primary" link size="small" @click="handleRecord(row)"
             >记录</el-button
           >
+          <el-button type="primary" link size="small" @click="handleQrcode(row)"
+            >二维码</el-button
+          >
           <el-button
             type="primary"
             link
@@ -168,6 +171,7 @@
       ref="calendarModalRef"
       :instrument-id="selectedInstrumentId"
     />
+    <QrcodeModal ref="qrcodeModalRef" />
   </div>
 </template>
 
@@ -183,6 +187,7 @@ import {
   deleteDevice
 } from "@/api/labDevice";
 import AppointmentCalendarModal from "./AppointmentCalendarModal.vue";
+import QrcodeModal from "./QrcodeModal.vue";
 import dayjs from "dayjs";
 const router = useRouter();
 
@@ -357,13 +362,21 @@ const handleEdit = row => {
 // 添加新的响应式变量
 const calendarModalRef = ref(null);
 const selectedInstrumentId = ref(null);
+const qrcodeModalRef = ref(null);
 const handleRecord = row => {
   selectedInstrumentId.value = row.id;
 
-  // 等待 DOM 更新后调用组件的 open 方法
   nextTick(() => {
     if (calendarModalRef.value) {
       calendarModalRef.value.open();
+    }
+  });
+};
+
+const handleQrcode = row => {
+  nextTick(() => {
+    if (qrcodeModalRef.value) {
+      qrcodeModalRef.value.open(row);
     }
   });
 };

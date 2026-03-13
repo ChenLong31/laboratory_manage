@@ -76,7 +76,12 @@
 
     <el-card shadow="never" class="mt-4">
       <div class="control">
-        <el-button type="primary" @click="handleAdd">新增</el-button>
+        <el-button
+          v-if="userInfo.account === 'admin123'"
+          type="primary"
+          @click="handleAdd"
+          >新增</el-button
+        >
         <el-button
           :icon="Download"
           type="info"
